@@ -1,0 +1,71 @@
+[
+  {
+    "name": "Enquiry-first service information contains no public prices",
+    "sanity": true,
+    "viewport": "desktop",
+    "covers": [
+      "pricing route contains no amounts or currency figures",
+      "service enquiry CTA",
+      "service descriptions",
+      "no pending pricing language"
+    ],
+    "description": "Verifies the pricing route is an enquiry page and does not expose price amounts or pricing approval messages.",
+    "steps": [
+      "Open the service enquiry page",
+      "Review all visible content",
+      "Click Request a Service Enquiry"
+    ],
+    "expected": "No price, currency amount, package amount, pending approval message or empty pricing card is shown, and the enquiry form opens."
+  },
+  {
+    "name": "Illustrative résumé and cover-letter samples are visible",
+    "viewport": "mobile",
+    "covers": [
+      "illustrative résumé layout with generic placeholders",
+      "illustrative cover-letter layout with generic placeholders",
+      "responsive sample document gallery",
+      "portfolio enquiry CTA"
+    ],
+    "description": "Checks the public Samples page presents illustrative document layouts without fabricated client identities or employment records.",
+    "steps": [
+      "Open Samples on mobile",
+      "Review the résumé and cover-letter previews",
+      "Click Request a Service Enquiry"
+    ],
+    "expected": "Both illustrative layouts are visible with generic placeholders, a disclaimer clarifies they are examples, and the enquiry form opens."
+  },
+  {
+    "name": "Authentic owner-confirmed recommendations remain visible",
+    "viewport": "desktop",
+    "covers": [
+      "five owner-confirmed testimonials",
+      "names and exact testimonial copy",
+      "no star ratings",
+      "employment outcome disclaimer"
+    ],
+    "description": "Checks the testimonials confirmed authentic by the site owner remain displayed without fabricated ratings or guarantees.",
+    "steps": [
+      "Open homepage",
+      "Scroll to recommendations",
+      "Review all five attributions and the disclaimer"
+    ],
+    "expected": "The five supplied recommendations remain visible, no star ratings are invented, and no employment outcome is guaranteed."
+  },
+  {
+    "name": "Industry section is truthful and enquiry buttons work",
+    "viewport": "mobile",
+    "covers": [
+      "general industry descriptions",
+      "no named employer endorsement",
+      "service enquiry form",
+      "mobile layout"
+    ],
+    "description": "Verifies the industries section discusses sectors without implying named company relationships and visitors can submit enquiries.",
+    "steps": [
+      "Review homepage industry section",
+      "Confirm no named target employers are shown as partners",
+      "Open the enquiry form"
+    ],
+    "expected": "Only general industry descriptions are shown and enquiry form opens with contact and service fields."
+  }
+]
