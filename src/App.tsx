@@ -1,166 +1,181 @@
-import { useEffect, useMemo, useState } from 'react';
-import { api, auth } from './client';
-import {
-  ArrowDownRight,
-  ArrowRight,
-  Check,
-  FileText,
-  Menu,
-  ShieldCheck,
-  Sparkles,
-  X,
-} from 'lucide-react';
+import { FormEvent, ReactNode, useEffect, useMemo, useState } from 'react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import './app.css';
-import { PortfolioPage, PricingPage, PackageFinder, ResourcesSection } from './EnhancementPages';
+
+const PHONE_DISPLAY = '+1 (618) 328-1534';
+const PHONE_TEL = '+16183281534';
+const TEXT_LINK = 'sms:+16183281534';
+const WA_DISPLAY = '+1 (618) 440-6067';
+const WA_LINK = 'https://wa.me/16184406067';
 
 type Service = {
   slug: string;
   title: string;
-  eyebrow: string;
-  description: string;
-  deliverables: string[];
-  note: string;
-};
-type Enquiry = {
-  id: string;
-  reference: string;
-  name: string;
-  email: string;
-  service: string;
-  message: string;
-  createdAt: string;
-  status: string;
-};
-type Order = {
-  id: string;
-  reference: string;
-  name: string;
-  email: string;
-  service: string;
-  targetRole: string;
-  createdAt: string;
-  status: string;
-};
-type ClientOrder = {
-  id: string;
-  reference: string;
-  service: string;
-  targetRole?: string;
-  targetMarket?: string;
-  message?: string;
-  createdAt: string;
-  status: string;
-  paymentStatus: string;
-  statusUpdatedAt?: string;
-  statusHistory?: Array<{ status: string; at: string; actor: string }>;
+  summary: string;
+  lead: string;
+  points: string[];
 };
 
 const services: Service[] = [
   {
     slug: 'resume-writing',
-    title: 'Résumé & CV writing',
-    eyebrow: '01 / FOUNDATIONS',
-    description:
-      'A considered, well-structured career document that communicates your experience, strengths and direction with clarity.',
-    deliverables: [
-      'Professionally written résumé or CV',
-      'Clear hierarchy and refined language',
-      'Editable delivery format as agreed',
+    title: 'Resume Writing',
+    summary: 'A resume written from your experience and aimed at the roles you want next.',
+    lead: 'We organize your work history, skills, and results into a document a hiring manager can read quickly. The content comes from you. We do not invent roles, degrees, or achievements.',
+    points: [
+      'A consultation to understand your experience and target role',
+      'A structured resume written in clear, specific language',
+      'Editing passes within the revision window we agree before work starts',
+      'Final files delivered in Word and PDF',
     ],
-    note: 'Best for professionals refreshing their career story or preparing for a new direction.',
-  },
-  {
-    slug: 'executive-resume',
-    title: 'Executive résumé',
-    eyebrow: '02 / LEADERSHIP',
-    description:
-      'A clear executive narrative shaped around leadership scope, strategic contribution and professional positioning.',
-    deliverables: [
-      'Executive résumé structure',
-      'Leadership-focused career narrative',
-      'Content tailored to the agreed target',
-    ],
-    note: 'Designed for experienced leaders. Content is based on information you provide.',
   },
   {
     slug: 'cover-letter',
-    title: 'Cover letter',
-    eyebrow: '03 / CONTEXT',
-    description:
-      'A tailored letter that connects your relevant experience to a specific role or professional opportunity.',
-    deliverables: [
-      'Role-focused cover-letter copy',
-      'Editorial refinement',
-      'Final format agreed before work begins',
+    title: 'Cover Letter Writing',
+    summary: 'A letter that connects your background to one role or one kind of role.',
+    lead: 'Bring the job posting when you have it. We write a letter that explains why your experience is relevant, using details you confirm.',
+    points: [
+      'A letter written for a specific role or career direction',
+      'A tone matched to the industry you are approaching',
+      'A version you can adapt for later applications',
     ],
-    note: 'Share the target role and job description when available.',
   },
   {
-    slug: 'linkedin-optimization',
-    title: 'LinkedIn profile content',
-    eyebrow: '04 / PRESENCE',
-    description:
-      'Thoughtful professional profile copy that helps communicate your expertise and career direction consistently.',
-    deliverables: [
+    slug: 'linkedin',
+    title: 'LinkedIn Profile Writing',
+    summary: 'Headline, About, and experience copy you can paste into your own profile.',
+    lead: 'We never need your LinkedIn password. You receive the wording, and you publish it yourself.',
+    points: [
       'Headline options',
-      'About section draft',
-      'Agreed experience-section recommendations',
+      'An About section draft',
+      'Experience descriptions aligned with your resume',
     ],
-    note: 'We never need your LinkedIn password; copy and guidance are delivered for you to apply.',
   },
   {
-    slug: 'professional-biography',
-    title: 'Professional biography',
-    eyebrow: '05 / INTRODUCTION',
-    description:
-      'A polished short or long-form biography for professional profiles, speaker introductions and business contexts.',
-    deliverables: [
-      'Biography in an agreed length',
-      'Tone matched to intended use',
+    slug: 'interview-prep',
+    title: 'Interview Preparation',
+    summary: 'A working session to organize your examples before you interview.',
+    lead: 'We help you choose stories from your real work, practice how to tell them, and prepare questions for the employer. The session length is confirmed before you book.',
+    points: [
+      'A scheduled preparation session',
+      'Prompts based on the role you are pursuing',
+      'Notes you can review afterward',
+    ],
+  },
+  {
+    slug: 'thank-you-letter',
+    title: 'Thank You Letter',
+    summary: 'A short follow-up note after an interview or introduction.',
+    lead: 'A concise letter that refers to the conversation you actually had and restates your interest without overstating it.',
+    points: [
+      'A note tailored to the interview or meeting',
+      'Language you can send by email',
+      'A second pass if the agreed scope includes a revision',
+    ],
+  },
+  {
+    slug: 'professional-bio',
+    title: 'Professional Bio',
+    summary: 'A short or long biography for a profile, speaker introduction, or company page.',
+    lead: 'Tell us where the bio will appear and who will read it. We match the length and tone to that use.',
+    points: [
+      'A biography in the length we agree',
+      'A tone suited to the audience',
       'Edited final copy',
     ],
-    note: 'Tell us where the biography will appear and who it should speak to.',
   },
   {
-    slug: 'resume-editing',
-    title: 'Résumé editing',
-    eyebrow: '06 / REFINEMENT',
-    description:
-      'Focused editing or restructuring of an existing document, with scope agreed before the project starts.',
-    deliverables: [
-      'Editorial review',
-      'Clarity and consistency improvements',
-      'Scope-matched rewrite where agreed',
+    slug: 'career-coaching',
+    title: 'Career Coaching',
+    summary: 'A focused conversation about your next step and how to describe it.',
+    lead: 'Coaching is a working session, not a job placement service. We help you clarify direction, priorities, and the materials you need. Hiring decisions stay with employers.',
+    points: [
+      'A consultation about your target and constraints',
+      'Practical next steps for your search',
+      'Guidance on which documents are worth writing first',
     ],
-    note: 'Editing is distinct from creating a new résumé from scratch.',
-  },
-  {
-    slug: 'interview-preparation',
-    title: 'Interview preparation',
-    eyebrow: '07 / READINESS',
-    description:
-      'A structured consultation to help you prepare examples, organize your experience and communicate with confidence.',
-    deliverables: [
-      'Agreed consultation session',
-      'Preparation prompts where included',
-      'Action notes as agreed',
-    ],
-    note: 'Session duration, scheduling and materials are confirmed before purchase.',
   },
 ];
 
-const orderStatuses = [
-  'awaiting_scope_confirmation',
-  'received',
-  'awaiting_client_information',
-  'in_progress',
-  'awaiting_internal_review',
-  'ready_for_client_review',
-  'revision_requested',
-  'revision_in_progress',
-  'completed',
-  'cancelled',
-  'on_hold',
+const packages = [
+  {
+    slug: 'entry-level-resume',
+    title: 'Entry Level Resume',
+    who: 'For people with about 0–2 years in the workforce.',
+    points: [
+      'A conversation about school, projects, and early roles',
+      'A resume format that is easy for an employer to scan',
+      'Wording based only on experience you provide',
+      'Draft timing, price, and revisions confirmed before we start',
+      'Final resume emailed in Word and PDF',
+    ],
+  },
+  {
+    slug: 'professional-resume',
+    title: 'Professional Resume',
+    who: 'For people with more than two years of work experience.',
+    points: [
+      'A consultation about your roles and the job you want next',
+      'A resume that leads with relevant strengths',
+      'Language aligned to the postings you share with us',
+      'Draft timing, price, and revisions confirmed before we start',
+      'Final resume emailed in Word and PDF',
+    ],
+  },
+  {
+    slug: 'executive-resume',
+    title: 'Executive Resume',
+    who: 'For directors, vice presidents, and other leadership roles.',
+    points: [
+      'A consultation about scope, leadership, and results you can verify',
+      'A narrative built around responsibility and impact',
+      'Room for a board, P&L, or transformation story when it is true',
+      'Draft timing, price, and revisions confirmed before we start',
+      'Final resume emailed in Word and PDF',
+    ],
+  },
+];
+
+const testimonials = [
+  {
+    quote:
+      'The process helped me look at my experience from a more strategic perspective. Instead of simply listing responsibilities, the résumé presented my leadership experience, business contributions and career progression in a much clearer way. The final document felt appropriate for the level of roles I am pursuing.',
+    name: 'Michael R. Bennett',
+    role: 'Senior Operations Executive',
+  },
+  {
+    quote:
+      'My LinkedIn profile needed a clearer professional direction. The revised headline, About section and experience descriptions created a more consistent picture of my skills and the work I want to pursue. I now have a much clearer foundation for professional networking.',
+    name: 'Daniel K. Foster',
+    role: 'LinkedIn profile client',
+  },
+  {
+    quote:
+      'I needed help presenting experience from a different industry in a way that made sense for my new career direction. The revised résumé brought forward transferable skills and relevant achievements while making the transition easier to understand.',
+    name: 'Olivia M. Carter',
+    role: 'Career transition client',
+  },
+  {
+    quote:
+      'The revised CV gave my academic experience a more organized presentation. My education, research activities, teaching experience and professional contributions were easier to navigate, which made the document more suitable for academic and research opportunities.',
+    name: 'Dr. Samuel T. Williams',
+    role: 'Academic and research professional',
+  },
+  {
+    quote:
+      'I appreciated the focus on relevance and clarity. The application documents connected my experience to the type of position I was pursuing without relying on exaggerated language. The result was professional, focused and easier to personalize for individual applications.',
+    name: 'Natalie J. Brooks',
+    role: 'Professional résumé client',
+  },
+];
+
+const industries = [
+  ['Technology', 'Software, cloud, and digital roles.'],
+  ['Healthcare', 'Clinical leadership, operations, and administration.'],
+  ['Education', 'Teaching, research, and campus roles.'],
+  ['Finance', 'Accounting, analysis, and professional services.'],
+  ['Operations', 'Project management and business operations.'],
+  ['Non-profit', 'Program and development work.'],
 ];
 
 const faqs = [
@@ -169,1686 +184,678 @@ const faqs = [
     'No. Our work focuses on the clarity and presentation of your career materials. Hiring decisions, interviews, referrals and compensation are outside our control.',
   ],
   [
-    'What should I prepare before ordering?',
-    'An existing résumé if you have one, details of your experience, the role or direction you are targeting, and any relevant job description. We only ask for information needed for your selected service.',
+    'What should I prepare before we start?',
+    'An existing résumé if you have one, the details of your experience, the role or direction you are targeting, and any job description you want us to use. We only ask for information needed for the service you choose.',
+  ],
+  [
+    'How do I reach you?',
+    `Call or text ${PHONE_DISPLAY}. For WhatsApp, message ${WA_DISPLAY}. The form on this site opens a WhatsApp message so you can send your request directly.`,
   ],
   [
     'Can I request changes after delivery?',
-    'Revision allowances and deadlines depend on the package agreed with you. The final scope and revision terms will be shown before payment is enabled.',
+    'Revision allowances depend on the package we agree with you. Scope, price, and revision terms are confirmed before work begins.',
   ],
   [
-    'How are my documents handled?',
-    'Career documents can contain personal information. Documents should only be submitted through an approved, secure upload workflow. This launch build does not yet accept private document uploads.',
+    'Do you need my LinkedIn password or other logins?',
+    'No. We write the copy and you publish it. Please do not send passwords, government ID numbers, or unrelated sensitive information.',
   ],
   [
     'Do you offer recruitment or job placement?',
-    'Ascendant Career Services is presented as a career-document and professional-branding service. No recruitment-agency representation or job-placement service is promised here.',
+    'No. Ascendant Career Services writes career documents and prepares you for conversations. We do not place candidates into jobs.',
   ],
 ];
 
+const steps = [
+  ['01', 'Choose a service', 'Tell us whether you need a resume, a letter, a LinkedIn profile, or a preparation session.'],
+  ['02', 'Talk with us', 'Call, text, or WhatsApp. We ask about your experience and the role you want.'],
+  ['03', 'Agree the scope', 'You receive the price, turnaround, and revision terms before any work starts.'],
+  ['04', 'Review the draft', 'We write from what you shared. You tell us what to adjust.'],
+  ['05', 'Receive your files', 'Resume work is delivered in Word and PDF. Other services are delivered in the format we agreed.'],
+];
+
+function go(path: string) {
+  window.location.hash = path ? '#/' + path : '#/';
+}
+
 function App() {
-  const [route, setRoute] = useState(
-    window.location.hash.replace(/^#\/?/, '') || ''
-  );
+  const [route, setRoute] = useState(() => window.location.hash.replace(/^#\/?/, ''));
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [formOpen, setFormOpen] = useState(false);
-  const [formKind, setFormKind] = useState<'enquiry' | 'order'>('enquiry');
-  const [selectedService, setSelectedService] = useState('resume-writing');
-  const [toast, setToast] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [formError, setFormError] = useState('');
-  const [receipt, setReceipt] = useState('');
-  const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [adminLoading, setAdminLoading] = useState(false);
-  const [adminError, setAdminError] = useState('');
-  const [adminMode, setAdminMode] = useState(false);
-  const [adminSignInBusy, setAdminSignInBusy] = useState(false);
-  const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>({});
-  const [updatingOrderId, setUpdatingOrderId] = useState('');
-  const [faqOpen, setFaqOpen] = useState<number | null>(0);
+  const [openMenu, setOpenMenu] = useState('');
+  const [faqOpen, setFaqOpen] = useState(0);
+  const [reviewIndex, setReviewIndex] = useState(0);
 
   useEffect(() => {
     const onHash = () => {
       setRoute(window.location.hash.replace(/^#\/?/, ''));
       setMobileOpen(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setOpenMenu('');
+      window.scrollTo({ top: 0 });
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
   useEffect(() => {
-    if (route.startsWith('admin')) {
-      setAdminMode(true);
-      void loadAdmin();
-    } else {
-      setAdminMode(false);
-    }
-  }, [route]);
-
-  const currentService = useMemo(
-    () =>
-      services.find(service => service.slug === selectedService) ?? services[0],
-    [selectedService]
-  );
-
-  async function loadAdmin() {
-    setAdminLoading(true);
-    setAdminError('');
-    try {
-      const [enquiryResult, orderResult] = await Promise.all([
-        api.get('/api/admin/enquiries'),
-        api.get('/api/admin/orders'),
-      ]);
-      setEnquiries(enquiryResult.data.items ?? []);
-      setOrders(orderResult.data.items ?? []);
-    } catch (error) {
-      setAdminError(
-        'Admin records are unavailable. Sign in with an authorized team account after access controls are configured.'
-      );
-    } finally {
-      setAdminLoading(false);
-    }
-  }
-
-  async function signInAdmin() {
-    setAdminSignInBusy(true);
-    setAdminError('');
-    try {
-      await auth.signIn();
-      await loadAdmin();
-    } catch (err) {
-      setAdminError('Sign-in was not completed. Use an account whose email has been approved for staff access.');
-    } finally {
-      setAdminSignInBusy(false);
-    }
-  }
-
-  async function updateOrderStatus(item: Order, status: string) {
-    setUpdatingOrderId(item.id);
-    setAdminError('');
-    try {
-      await api.put('/api/admin/orders/' + encodeURIComponent(item.id) + '/status', { status });
-      setStatusDrafts(current => ({ ...current, [item.id]: status }));
-      setToast('Order status updated.');
-      await loadAdmin();
-    } catch (err) {
-      setAdminError('The order status could not be updated. Confirm administrator access and choose a permitted next status.');
-    } finally {
-      setUpdatingOrderId('');
-    }
-  }
-
-  function openForm(kind: 'enquiry' | 'order', slug?: string) {
-    setFormKind(kind);
-    if (slug) setSelectedService(slug);
-    setFormError('');
-    setReceipt('');
-    setFormOpen(true);
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setFormError('');
-    setBusy(true);
-    const data = new FormData(event.currentTarget);
-    const payload = {
-      name: String(data.get('name') ?? '').trim(),
-      email: String(data.get('email') ?? '').trim(),
-      phone: String(data.get('phone') ?? '').trim(),
-      service: String(data.get('service') ?? selectedService),
-      targetRole: String(data.get('targetRole') ?? '').trim(),
-      targetMarket: String(data.get('targetMarket') ?? '').trim(),
-      message: String(data.get('message') ?? '').trim(),
-      privacyAccepted: data.get('privacy') === 'on',
-      termsAccepted: formKind === 'order' ? data.get('terms') === 'on' : true,
-    };
-    try {
-      const response =
-        formKind === 'enquiry'
-          ? await api.post('/api/enquiries', payload)
-          : await api.post('/api/orders', payload);
-      setReceipt(response.data.reference);
-      setToast(
-        formKind === 'enquiry'
-          ? 'Your enquiry has been recorded.'
-          : 'Your service request has been recorded.'
-      );
-    } catch (error) {
-      setFormError(
-        'We could not submit your request. Please check the required fields and try again. If this continues, contact the team directly.'
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function go(path: string) {
-    window.location.hash = path ? '#/' + path : '#/';
-  }
-
-  if (adminMode) {
-    return (
-      <main className="admin-shell">
-        <aside className="admin-sidebar">
-          <a className="brand-lockup" href="#/">
-            <img className="brand-logo" src="/resources/ascendant-logo.png" alt="" />
-            <span>
-              ASCENDANT<small>CAREER SERVICES</small>
-            </span>
-          </a>
-          <p className="overline">WORKSPACE</p>
-          <a className="side-link active" href="#/admin">
-            Overview <ArrowRight size={15} />
-          </a>
-          <a className="side-link" href="#/admin/enquiries">
-            Enquiries
-          </a>
-          <a className="side-link" href="#/admin/orders">
-            Orders
-          </a>
-          <a className="side-link" href="#/admin/services">
-            Services & packages
-          </a>
-          <div className="sidebar-foot">
-            <ShieldCheck size={17} />
-            <span>
-              Private team workspace<small>Authorization required</small>
-            </span>
-          </div>
-        </aside>
-        <section className="admin-main">
-          <header className="admin-top">
-            <button className="text-button" onClick={() => go('')}>
-              ← View public site
-            </button>
-            <div className="admin-top-actions">
-              <button className="text-button" onClick={() => void signInAdmin()} disabled={adminSignInBusy}>
-                {adminSignInBusy ? 'Opening sign-in…' : 'Staff sign in'}
-              </button>
-              <span className="admin-label">ADMINISTRATION / PREVIEW</span>
-            </div>
-          </header>
-          <div className="admin-heading">
-            <div>
-              <p className="overline">ASCENDANT GROUPS</p>
-              <h1>Service workspace</h1>
-              <p className="muted">
-                Review incoming requests and track service demand.
-              </p>
-            </div>
-            <button
-              className="button button-dark"
-              onClick={() => void loadAdmin()}
-            >
-              Refresh records <ArrowRight size={16} />
-            </button>
-          </div>
-          <div className="admin-notice">
-            <ShieldCheck size={19} />
-            <p>
-              <strong>Access-controlled area</strong>
-              <br />
-              Administrative records are only shown after a server-side email
-              allowlist check. Configure the private ADMIN_EMAIL_ALLOWLIST
-              secret with approved staff emails; signing in alone never grants access.
-            </p>
-          </div>
-          {adminError && (
-            <div className="error-panel" role="alert">
-              {adminError}
-            </div>
-          )}
-          {adminLoading ? (
-            <p className="muted">Checking access and loading records…</p>
-          ) : (
-            <div className="admin-grid">
-              <article className="metric">
-                <span>Enquiries</span>
-                <strong>{enquiries.length}</strong>
-                <small>Persisted requests</small>
-              </article>
-              <article className="metric">
-                <span>Order requests</span>
-                <strong>{orders.length}</strong>
-                <small>Awaiting review</small>
-              </article>
-              <article className="metric">
-                <span>Service catalogue</span>
-                <strong>{services.length}</strong>
-                <small>Public service types</small>
-              </article>
-            </div>
-          )}
-          <div className="admin-columns">
-            <section className="admin-panel">
-              <div className="panel-heading">
-                <h2>Recent enquiries</h2>
-                <span>{enquiries.length} records</span>
-              </div>
-              {enquiries.length ? (
-                enquiries.slice(0, 8).map(item => (
-                  <div className="record-row" key={item.id}>
-                    <div>
-                      <strong>{item.name}</strong>
-                      <small>
-                        {item.service} · {item.email}
-                      </small>
-                    </div>
-                    <span className="status-pill">{item.status}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="empty-state">
-                  Enquiries will appear here once access is approved and
-                  requests are received.
-                </p>
-              )}
-            </section>
-            <section className="admin-panel">
-              <div className="panel-heading">
-                <h2>Recent service requests</h2>
-                <span>{orders.length} records</span>
-              </div>
-              {orders.length ? (
-                orders.slice(0, 8).map(item => (
-                  <div className="record-row admin-order-row" key={item.id}>
-                    <div className="admin-order-identity">
-                      <strong>{item.reference}</strong>
-                      <small>{item.service} · {item.name}</small>
-                    </div>
-                    <div className="admin-order-controls">
-                      <label className="visually-hidden" htmlFor={'order-status-' + item.id}>Status for {item.reference}</label>
-                      <select
-                        id={'order-status-' + item.id}
-                        value={statusDrafts[item.id] ?? item.status}
-                        onChange={event => setStatusDrafts(current => ({ ...current, [item.id]: event.target.value }))}
-                      >
-                        {orderStatuses.map(status => (
-                          <option key={status} value={status}>{status.replace(/_/g, ' ')}</option>
-                        ))}
-                      </select>
-                      <button
-                        className="text-button admin-save-status"
-                        onClick={() => void updateOrderStatus(item, statusDrafts[item.id] ?? item.status)}
-                        disabled={updatingOrderId === item.id || adminLoading}
-                      >
-                        {updatingOrderId === item.id ? 'Saving…' : 'Save status'}
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="empty-state">
-                  Order requests will be listed here for review. Payment
-                  processing is not enabled in this configuration.
-                </p>
-              )}
-            </section>
-          </div>
-        </section>
-      </main>
-    );
-  }
+    const timer = window.setInterval(() => {
+      setReviewIndex(current => (current + 1) % testimonials.length);
+    }, 7000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const serviceSlug = route.startsWith('services/') ? route.split('/')[1] : '';
-  const detailService = services.find(item => item.slug === serviceSlug);
-  const isServices = route === 'services';
-  const isPricing = route === 'pricing';
-  const isCheckout = route === 'checkout';
-  const isCheckoutSuccess = route === 'checkout/success';
-  const isCheckoutCancel = route === 'checkout/cancel';
-  const isClientRoute =
-    route === 'order-status' ||
-    route === 'client/login' ||
-    route === 'client/orders' ||
-    route.startsWith('client/orders/');
-  const isAbout = route === 'about';
-  const isHow = route === 'how-it-works';
-  const isPortfolio = route === 'portfolio';
-  const isContact = route === 'contact' || route === 'request-service';
-  const isGuides = route === 'guides';
-  const isPolicy = ['privacy', 'terms', 'refund-policy', 'disclaimer'].includes(
-    route
-  );
+  const detail = services.find(item => item.slug === serviceSlug);
+  const preset = route.startsWith('get-started/') ? route.split('/')[1] : '';
+
+  const page = useMemo(() => {
+    if (!route) return 'home';
+    if (route === 'services' || detail) return 'service';
+    if (route === 'how-it-works') return 'how';
+    if (route === 'why-us') return 'why';
+    if (route === 'pricing') return 'pricing';
+    if (route === 'samples') return 'samples';
+    if (route === 'faq') return 'faq';
+    if (route === 'about') return 'about';
+    if (route === 'contact') return 'contact';
+    if (route === 'get-started' || route.startsWith('get-started/')) return 'start';
+    if (route === 'privacy' || route === 'terms' || route === 'disclaimer') return 'policy';
+    return 'missing';
+  }, [route, detail]);
+
+  function onSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const query = String(new FormData(event.currentTarget).get('q') ?? '').trim().toLowerCase();
+    const hit = services.find(item =>
+      (item.title + ' ' + item.summary).toLowerCase().includes(query)
+    );
+    go(hit ? 'services/' + hit.slug : 'services');
+  }
+
+  const shownReviews = [
+    testimonials[reviewIndex],
+    testimonials[(reviewIndex + 1) % testimonials.length],
+  ];
 
   return (
-    <div className="site-shell">
-      <div className="announcement">
-        <span>CAREER DOCUMENTS · PROFESSIONAL BRANDING</span>
-                  <span>Career documents and professional branding</span>
-      </div>
+    <div className="site">
       <header className="site-header">
-        <a
-          className="brand-lockup"
-          href="#/"
-          aria-label="Ascendant Career Services home"
-        >
-          <img className="brand-logo" src="/resources/ascendant-logo.png" alt="" />
-          <span>
-            ASCENDANT<small>CAREER SERVICES</small>
-          </span>
-        </a>
-        <nav
-          className={mobileOpen ? 'main-nav open' : 'main-nav'}
-          aria-label="Main navigation"
-        >
-          <a href="#/services">Services</a>
-          <a href="#/pricing">Request a Quote</a>
-          <a href="#/how-it-works">How it works</a>
-          <a href="#/portfolio">Samples</a>
-          <a href="#/about">About</a>
+        <div className="header-inner">
+          <a className="brand" href="#/" aria-label="Ascendant home">
+            <img src="/logo.png" alt="Ascendant" />
+            <small>Professional resumes and career documents.</small>
+          </a>
           <button
-            className="button button-dark nav-cta"
-            onClick={() => openForm('enquiry')}
+            className="menu-toggle"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => setMobileOpen(open => !open)}
           >
-            Start an enquiry <ArrowUpRightIcon />
+            {mobileOpen ? <X /> : <Menu />}
           </button>
-        </nav>
-        <button
-          className="mobile-menu"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          {mobileOpen ? <X /> : <Menu />}
-        </button>
+          <nav className={mobileOpen ? 'nav open' : 'nav'} aria-label="Main">
+            <div className={openMenu === 'services' ? 'menu open' : 'menu'}>
+              <button className="trigger" onClick={() => setOpenMenu(openMenu === 'services' ? '' : 'services')}>
+                Our Services <ChevronDown size={14} />
+              </button>
+              <div className="menu-panel">
+                {services.map(service => (
+                  <a key={service.slug} href={'#/services/' + service.slug}>{service.title}</a>
+                ))}
+              </div>
+            </div>
+            <a href="#/how-it-works">How it Works</a>
+            <a href="#/why-us">Why Us</a>
+            <a href="#/pricing">Pricing</a>
+            <div className={openMenu === 'resources' ? 'menu open' : 'menu'}>
+              <button className="trigger" onClick={() => setOpenMenu(openMenu === 'resources' ? '' : 'resources')}>
+                Resources <ChevronDown size={14} />
+              </button>
+              <div className="menu-panel">
+                <a href="#/samples">Sample Resumes</a>
+                <a href="#/faq">FAQs</a>
+              </div>
+            </div>
+            <a href="#/about">About Us</a>
+            <a className="btn header-cta" href="#/get-started">Get Started</a>
+            <form className="search" onSubmit={onSearch} role="search">
+              <input name="q" aria-label="Search services" placeholder="Search…" />
+              <button type="submit" aria-label="Search">⌕</button>
+            </form>
+          </nav>
+        </div>
       </header>
 
-      {isServices ? (
-        <section className="page-width inner-page services-index">
-          <p className="overline">THE SERVICE CATALOGUE</p>
-          <h1>
-            A clearer story for
-            <br />
-            <em>your next step.</em>
-          </h1>
-          <p className="page-intro">
-            Explore our career-document services. Tell us what you need and our
-            team will review your goals before explaining the suitable service,
-            scope and pricing.
-          </p>
-          <div className="service-grid">
-            {services.map(service => (
-              <ServiceCard
-                key={service.slug}
-                service={service}
-                onOpen={() => go('services/' + service.slug)}
-                onEnquire={() => openForm('enquiry', service.slug)}
-              />
-            ))}
-          </div>
-          <div className="service-index-note">
-            <ShieldCheck size={18} />
-            <p>
-              We work from information you provide. We do not fabricate
-              qualifications or guarantee interviews, employment, referrals or
-              salary outcomes.
-            </p>
-          </div>
-        </section>
-      ) : detailService ? (
-        <section className="service-detail page-width">
-          <button className="back-link" onClick={() => go('services')}>
-            ← All services
-          </button>
-          <p className="overline">{detailService.eyebrow}</p>
-          <h1>
-            {detailService.title}
-            <em>, with intention.</em>
-          </h1>
-          <p className="detail-lead">{detailService.description}</p>
-          <div className="detail-layout">
-            <div>
-              <h2>What we shape together</h2>
-              <ul className="check-list">
-                {detailService.deliverables.map(item => (
-                  <li key={item}>
-                    <Check size={17} />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <p className="detail-note">{detailService.note}</p>
-              <div className="disclaimer-small">
-                Service scope, delivery timing, revisions and price are
-                confirmed before payment. Employment outcomes are not
-                guaranteed.
-              </div>
-              <button
-                className="button button-dark"
-                onClick={() => openForm('enquiry', detailService.slug)}
-              >
-                Discuss this service <ArrowRight size={16} />
-              </button>
+      <div className="callbar">
+        <a href={'tel:' + PHONE_TEL}>Tap here to call or text us now! {PHONE_DISPLAY}</a>
+        <span className="split" aria-hidden="true">|</span>
+        <a href={WA_LINK} target="_blank" rel="noreferrer">WhatsApp {WA_DISPLAY}</a>
+      </div>
+
+      {page === 'home' && (
+        <>
+          <section className="hero">
+            <img className="hero-mark" src="/mark.png" alt="" />
+            <div className="hero-reviews">
+              {shownReviews.map(item => (
+                <article className="review-card" key={item.name}>
+                  <p>“{item.quote}”</p>
+                  <strong>{item.name}</strong>
+                  <span>{item.role}</span>
+                </article>
+              ))}
             </div>
-            <DocumentSpecimen
-              variant={
-                detailService.slug === 'cover-letter' ? 'letter' : 'resume'
-              }
-            />
-          </div>
-        </section>
-      ) : isPricing ? (
-        <section className="page-width inner-page">
-          <p className="overline">CLEAR EXPECTATIONS</p>
-          <h1>
-            Good work begins
-            <br />
-            <em>with clarity.</em>
-          </h1>
-          <p className="page-intro">
-            Tell us about your career goals and the service you need. Our team
-            will review your requirements and respond with suitable options,
-            scope and pricing.
-          </p>
-          <PricingPage onEnquire={() => openForm('enquiry')} onOrder={() => openForm('order')} />
-          <div className="service-grid compact">
-            {services.slice(0, 3).map(service => (
-              <ServiceCard
-                key={service.slug}
-                service={service}
-                onOpen={() => go('services/' + service.slug)}
-                onEnquire={() => openForm('enquiry', service.slug)}
-              />
+            <div className="hero-caption">
+              <h1>Work with a resume writing service that starts from your real experience.</h1>
+              <p>
+                Ascendant Career Services writes resumes, cover letters, and LinkedIn profiles
+                for the roles you are actually pursuing. Call, text, or WhatsApp to get started.
+              </p>
+              <a className="btn" href="#/get-started">Get Started</a>
+            </div>
+          </section>
+
+          <section className="section">
+            <div className="wrap">
+              <PackageGrid />
+              <p className="price-note">
+                Price, turnaround, and revisions are confirmed on your call before any work begins.
+                We do not publish a rate that might not match your documents.
+              </p>
+            </div>
+          </section>
+
+          <section className="guarantee">
+            <img className="mark-badge" src="/mark.png" alt="" />
+            <h2>Our writing is revised until the agreed draft is right.</h2>
+            <p>Not satisfied with the document we agreed to write? Tell us during the revision window and we will correct it.</p>
+            <a className="btn" href="#/why-us">Learn more</a>
+          </section>
+
+          <section className="section">
+            <div className="wrap help-grid">
+              {[
+                ['cover-letter', 'Cover Letter Help', 'Need a letter for a specific role? We write it from the experience you share.'],
+                ['linkedin', 'LinkedIn Profiles', 'We prepare the copy. You paste it into your profile. No password required.'],
+                ['interview-prep', 'Interview Preparation', 'Practice the examples you already have so they are easier to explain.'],
+                ['career-coaching', 'Career Coaching', 'A working session on direction, priorities, and which documents to write first.'],
+              ].map(item => (
+                <a className="help-card" href={'#/services/' + item[0]} key={item[0]}>
+                  <img src="/mark.png" alt="" />
+                  <h3>{item[1]}</h3>
+                  <p>{item[2]}</p>
+                </a>
+              ))}
+            </div>
+          </section>
+
+          <section className="section" style={{ background: '#f7f7f7' }}>
+            <div className="wrap">
+              <div className="center">
+                <h2>Career documents for the work you do.</h2>
+                <p className="lead">These are fields we write for. They are not client lists, partnerships, or employer endorsements.</p>
+              </div>
+              <div className="industry-grid">
+                {industries.map(item => (
+                  <article className="industry-card" key={item[0]}>
+                    <span>FIELD</span>
+                    <h3>{item[0]}</h3>
+                    <p>{item[1]}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="section">
+            <div className="wrap why">
+              <div className="why-visual">
+                <img src="/logo.png" alt="Ascendant" />
+              </div>
+              <div>
+                <h2>Why choose Ascendant?</h2>
+                <ul>
+                  <li>Resumes, letters, bios, and LinkedIn copy are written from information you provide.</li>
+                  <li>We do not invent employers, job titles, degrees, or results.</li>
+                  <li>You approve the price and the revision terms before work starts.</li>
+                  <li>You can call, text, or WhatsApp a person, not a ticket queue.</li>
+                  <li>A finished resume is delivered in Word and PDF.</li>
+                  <li>Nothing on this site is a promise of interviews, offers, or salary.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section className="section" style={{ background: '#f7f7f7' }}>
+            <div className="wrap">
+              <h2>What clients have shared</h2>
+              <div className="quote-grid">
+                {testimonials.map(item => (
+                  <blockquote className="quote" key={item.name}>
+                    <p>“{item.quote}”</p>
+                    <footer>{item.name}<span>{item.role}</span></footer>
+                  </blockquote>
+                ))}
+              </div>
+              <p className="disclaimer">
+                Testimonials are published as supplied by Ascendant Career Services. Individual experiences vary; these comments do not guarantee interviews, job offers, salary increases or any specific employment outcome.
+              </p>
+            </div>
+          </section>
+
+          <section className="section">
+            <div className="wrap home-faq">
+              <div>
+                <h2>Questions, answered.</h2>
+                <p>If you still need a person, call or text {PHONE_DISPLAY}.</p>
+                <a className="btn" href="#/get-started">Get Started</a>
+              </div>
+              <FaqList faqOpen={faqOpen} setFaqOpen={setFaqOpen} />
+            </div>
+          </section>
+        </>
+      )}
+
+      {page === 'service' && !detail && (
+        <Inner title="Our Services" kicker="What we write">
+          <div className="help-grid">
+            {services.map(service => (
+              <a className="help-card" href={'#/services/' + service.slug} key={service.slug}>
+                <h3>{service.title}</h3>
+                <p>{service.summary}</p>
+              </a>
             ))}
           </div>
-        </section>
-      ) : isAbout ? (
-        <section className="page-width inner-page">
-          <p className="overline">ABOUT THE STUDIO</p>
-          <h1>
-            Professional stories,
-            <br />
-            <em>thoughtfully presented.</em>
-          </h1>
-          <p className="page-intro">
-            Ascendant Career Services is a career-document and
-            professional-branding service under Ascendant Groups. We help people
-            present their experience with clarity, structure and care.
-          </p>
-          <div className="about-values">
-            <article>
-              <span>01</span>
-              <h2>Clarity over claims</h2>
-              <p>
-                We present your real experience with focus and precision—never
-                fabricated credentials or inflated achievements.
-              </p>
+        </Inner>
+      )}
+
+      {page === 'service' && detail && (
+        <Inner title={detail.title} kicker="Our Services">
+          <div className="contact-layout">
+            <article className="info-card">
+              <p className="lead">{detail.lead}</p>
+              <ul>
+                {detail.points.map(point => <li key={point}>{point}</li>)}
+              </ul>
+              <a className="btn" href={'#/get-started/' + detail.slug}>Get Started</a>
             </article>
-            <article>
-              <span>02</span>
-              <h2>Craft is in the detail</h2>
-              <p>
-                Hierarchy, language and consistency all shape how a professional
-                story is read.
-              </p>
-            </article>
-            <article>
-              <span>03</span>
-              <h2>Respect for your information</h2>
-              <p>
-                Career documents are personal. We ask only for information
-                relevant to the service you choose.
-              </p>
-            </article>
+            <DocumentPreview kind={detail.slug === 'cover-letter' ? 'letter' : 'resume'} />
           </div>
-        </section>
-      ) : isHow ? (
-        <section className="page-width inner-page">
-          <p className="overline">THE PROCESS</p>
-          <h1>
-            A considered process.
-            <br />
-            <em>No guesswork.</em>
-          </h1>
-          <p className="page-intro">
-            A clear sequence keeps the brief, deliverables and expectations
-            aligned before work begins.
-          </p>
-          <div className="process-list">
-            {[
-              [
-                '01',
-                'Choose your service',
-                'Tell us whether you need a résumé, cover letter, profile content or another service.',
-              ],
-              [
-                '02',
-                'Share the context',
-                'We discuss your experience, target role and the outcome your documents need to communicate.',
-              ],
-              [
-                '03',
-                'Agree the scope',
-                'You receive a clear scope, price, turnaround and revision terms before payment is requested.',
-              ],
-              [
-                '04',
-                'Review and refine',
-                'Work progresses against the agreed brief, with feedback handled within the package terms.',
-              ],
-              [
-                '05',
-                'Receive your files',
-                'Final deliverables are provided through the agreed channel, with appropriate care for your information.',
-              ],
-            ].map(step => (
-              <article key={step[0]}>
-                <span>{step[0]}</span>
+        </Inner>
+      )}
+
+      {page === 'how' && (
+        <Inner title="A clear sequence, from first call to final file." kicker="How it Works">
+          <div className="steps">
+            {steps.map(step => (
+              <article className="step" key={step[0]}>
+                <b>{step[0]}</b>
                 <div>
-                  <h2>{step[1]}</h2>
+                  <h3>{step[1]}</h3>
                   <p>{step[2]}</p>
                 </div>
-                <ArrowDownRight size={18} />
               </article>
             ))}
           </div>
-        </section>
-      ) : isPortfolio ? (
-        <PortfolioPage onEnquire={() => openForm('enquiry')} />
-      ) : isContact ? (
-        <section className="page-width inner-page contact-page">
-          <p className="overline">LET’S START WITH THE BRIEF</p>
-          <h1>
-            Tell us where
-            <br />
-            <em>you want to go.</em>
-          </h1>
-          <p className="page-intro">
-            Share a little about your goals. We’ll review the request and follow
-            up about scope, timing and pricing.
-          </p>
-          <button
-            className="button button-dark"
-            onClick={() => openForm('enquiry')}
-          >
-            Open enquiry form <ArrowRight size={16} />
-          </button>
-          <p className="muted">
-            Please do not attach confidential documents until a secure
-            document-submission workflow has been approved.
-          </p>
-        </section>
-      ) : isGuides ? (
-        <section className="page-width inner-page">
-          <p className="overline">CAREER SUPPORT</p>
-          <h1>
-            Practical support
-            <br />
-            <em>for your next step.</em>
-          </h1>
-          <p className="page-intro">
-            Our team can help you clarify your career-document needs and discuss
-            the service that best fits your goals.
-          </p>
-          <button className="button button-dark" onClick={() => openForm('enquiry')}>
-            Request a Service Enquiry <ArrowRight size={16} />
-          </button>
-        </section>
-      ) : isPolicy ? (
-        <section className="page-width inner-page policy-page">
-          <p className="overline">IMPORTANT INFORMATION</p>
-          <h1>
-            {
-              (
-                {
-                  privacy: 'Privacy notice',
-                  terms: 'Terms of service',
-                  'refund-policy': 'Cancellation & refund policy',
-                  disclaimer: 'Service disclaimer',
-                } as Record<string, string>
-              )[route]
-            }
-          </h1>
-          <div className="policy-warning">
-            Please contact Ascendant Career Services if you have questions
-            about how service requests and personal information are handled.
+          <p style={{ marginTop: 22 }}><a className="btn" href="#/get-started">Get Started</a></p>
+        </Inner>
+      )}
+
+      {page === 'why' && (
+        <Inner title="Why people call Ascendant." kicker="Why Us">
+          <div className="info-grid">
+            <article className="info-card">
+              <h3>Written from your record</h3>
+              <p>Every line has to come from experience, education, or results you can stand behind. We reshape the wording. We do not manufacture a career.</p>
+            </article>
+            <article className="info-card">
+              <h3>Terms before work</h3>
+              <p>You hear the price, the turnaround, and how revisions work before we begin. There is no checkout on this website.</p>
+            </article>
+            <article className="info-card">
+              <h3>A person answers</h3>
+              <p>Call or text {PHONE_DISPLAY}. WhatsApp {WA_DISPLAY}. Use the same number you want us to reply to.</p>
+            </article>
+            <article className="info-card">
+              <h3>No job promise</h3>
+              <p>A stronger document can make your experience easier to see. It cannot guarantee an interview, an offer, or a salary.</p>
+            </article>
           </div>
-          {route === 'disclaimer' ? (
-            <>
-              <h2>No employment guarantee</h2>
-              <p>
-                Purchasing a career-document or professional-branding service
-                does not guarantee employment, interviews, referrals, recruiter
-                responses or any salary outcome. Hiring decisions are made by
-                employers and other third parties.
-              </p>
-              <h2>Service scope</h2>
-              <p>
-                Only the deliverables documented in the agreed package are
-                included. Ascendant Career Services is not presented here as a
-                recruitment agency and does not promise job placement.
-              </p>
-            </>
-          ) : (
-            <>
-              <h2>Before publication</h2>
-              <p>
-                This page must be completed and approved by Ascendant Groups
-                before launch. It should explain the applicable rules for data
-                collection, document handling, account access, retention,
-                cancellations, refunds and dispute handling as relevant to the
-                selected policy.
-              </p>
-              <p>
-                Do not submit sensitive documents through this website until the
-                secure upload workflow and final policy are in place.
-              </p>
-            </>
-          )}
-        </section>
-      ) : isCheckout ? (
-        <section className="page-width inner-page checkout-page">
-          <p className="overline">PAYMENT CONFIGURATION</p>
-          <h1>
-            Clear terms
-            <br />
-            <em>before checkout.</em>
-          </h1>
-          <p className="page-intro">
-            Online checkout is not active yet. Approved package prices, service
-            terms and a supported payment provider must be configured before
-            this website can collect payments.
+        </Inner>
+      )}
+
+      {page === 'pricing' && (
+        <Inner title="Choose the resume that matches your experience." kicker="Pricing">
+          <PackageGrid />
+          <p className="price-note">
+            Tell us which package fits and we will confirm the price for your documents. Cover letters, LinkedIn profiles, bios, and coaching are quoted the same way.
           </p>
-          <div className="pricing-pending">
-            <span className="mini-seal">A</span>
-            <h2>No payment will be simulated.</h2>
+          <p style={{ textAlign: 'center', marginTop: 18 }}>
+            <a className="btn" href="#/get-started">Request a service enquiry</a>
+          </p>
+        </Inner>
+      )}
+
+      {page === 'samples' && (
+        <Inner title="See the structure. Your document uses your details." kicker="Sample Resumes">
+          <div className="sample-grid">
+            <article>
+              <DocumentPreview kind="resume" />
+              <h3 style={{ color: '#222' }}>Resume layout</h3>
+              <p>A simple order: summary, skills, experience, education. Placeholders only.</p>
+            </article>
+            <article>
+              <DocumentPreview kind="letter" />
+              <h3 style={{ color: '#222' }}>Cover letter layout</h3>
+              <p>A short letter that names the role and connects two or three real examples.</p>
+            </article>
+          </div>
+          <p className="disclaimer">
+            These are illustrative layouts, not a client’s career and not a promise of interviews, hiring, or employment.
+          </p>
+          <a className="btn" href="#/get-started">Request a service enquiry</a>
+        </Inner>
+      )}
+
+      {page === 'faq' && (
+        <Inner title="Frequently asked questions" kicker="Resources">
+          <FaqList faqOpen={faqOpen} setFaqOpen={setFaqOpen} />
+        </Inner>
+      )}
+
+      {page === 'about' && (
+        <Inner title="Career documents, written with care." kicker="About Us">
+          <div className="prose">
             <p>
-              You can submit a service request without being charged. The team
-              must confirm your deliverables, turnaround, price, currency and
-              revision allowance before a payment link can be issued.
+              Ascendant Career Services helps people present work they have already done. We write resumes, cover letters, LinkedIn profiles, thank-you notes, professional bios, and interview preparation from the information you share.
             </p>
-            <button className="button button-dark" onClick={() => openForm('order')}>
-              Submit a service request <ArrowRight size={16} />
-            </button>
+            <p>
+              We are not a recruitment agency. We do not submit applications for you, and we do not promise that an employer will call.
+            </p>
+            <p>
+              The fastest way to reach us is a call or text at {PHONE_DISPLAY}, or WhatsApp at {WA_DISPLAY}.
+            </p>
+            <a className="btn" href="#/contact">Contact Us</a>
           </div>
-          <button className="text-button" onClick={() => go('pricing')}>
-            Return to pricing information <ArrowRight size={15} />
-          </button>
-        </section>
-      ) : isCheckoutSuccess ? (
-        <section className="page-width inner-page checkout-page">
-          <p className="overline">PAYMENT STATUS</p>
-          <h1>
-            Confirmation requires
-            <br />
-            <em>a verified payment.</em>
-          </h1>
-          <p className="page-intro">
-            This page alone does not confirm a payment. Online payment is
-            currently disabled, and a success-page visit cannot mark an order
-            as paid. Check your authenticated order area for the latest status.
-          </p>
-          <div className="policy-warning">
-            No payment is reported as successful by this page.
+        </Inner>
+      )}
+
+      {page === 'contact' && (
+        <Inner title="Call, text, or send a note." kicker="Contact Us">
+          <div className="contact-layout">
+            <div className="contact-card">
+              <h3>Call or text</h3>
+              <a className="big" href={'tel:' + PHONE_TEL}>{PHONE_DISPLAY}</a>
+              <a href={TEXT_LINK}>Send a text message</a>
+              <h3 style={{ marginTop: 22 }}>WhatsApp</h3>
+              <a className="big" href={WA_LINK} target="_blank" rel="noreferrer">{WA_DISPLAY}</a>
+              <p>Use the form if you would rather start with a few details. It opens WhatsApp with your message ready to send.</p>
+            </div>
+            <EnquiryForm preset="" />
           </div>
-          <button className="button button-dark" onClick={() => go('order-status')}>
-            Check order status <ArrowRight size={16} />
-          </button>
-        </section>
-      ) : isCheckoutCancel ? (
-        <section className="page-width inner-page checkout-page">
-          <p className="overline">CHECKOUT NOT COMPLETED</p>
-          <h1>
-            Nothing to assume.
-            <br />
-            <em>Let’s review the next step.</em>
-          </h1>
-          <p className="page-intro">
-            No payment confirmation is recorded here. Online checkout is not
-            active yet, so return to the service request workflow or review the
-            agreed scope with the team.
-          </p>
-          <button className="button button-dark" onClick={() => openForm('order')}>
-            Submit a service request <ArrowRight size={16} />
-          </button>
-        </section>
-      ) : isClientRoute ? (
-        <ClientPortal route={route} go={go} />
-      ) : (
-        <Home
-          openForm={openForm}
-          go={go}
-          faqOpen={faqOpen}
-          setFaqOpen={setFaqOpen}
-        />
+        </Inner>
+      )}
+
+      {page === 'start' && (
+        <Inner title="Tell us what you need written." kicker="Get Started">
+          <div className="form-layout">
+            <div className="contact-card">
+              <h3>Prefer to talk now?</h3>
+              <a className="big" href={'tel:' + PHONE_TEL}>{PHONE_DISPLAY}</a>
+              <p>That number is for calls and texts.</p>
+              <h3>WhatsApp</h3>
+              <a className="big" href={WA_LINK} target="_blank" rel="noreferrer">{WA_DISPLAY}</a>
+              <p>After you submit the form, WhatsApp opens so you can send the enquiry yourself. This page does not store the form on a server.</p>
+            </div>
+            <EnquiryForm preset={preset} />
+          </div>
+        </Inner>
+      )}
+
+      {page === 'policy' && <Policy route={route} />}
+
+      {page === 'missing' && (
+        <Inner title="That page is not on this site." kicker="Ascendant">
+          <a className="btn" href="#/">Back to the homepage</a>
+        </Inner>
       )}
 
       <footer className="site-footer">
-        <div className="footer-top">
-          <a className="brand-lockup footer-brand" href="#/">
-            <img className="brand-logo" src="/resources/ascendant-logo.png" alt="" />
-            <span>
-              ASCENDANT<small>CAREER SERVICES</small>
-            </span>
-          </a>
-          <p>
-            Carefully considered career documents.
-            <br />
-            Clear presentation for your next chapter.
-          </p>
-          <button className="footer-cta" onClick={() => openForm('enquiry')}>
-            Start a conversation <ArrowRight size={16} />
-          </button>
-        </div>
-        <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} Ascendant Groups</span>
+        <div className="wrap foot-grid">
           <div>
+            <a className="foot-brand" href="#/"><img src="/logo.png" alt="Ascendant" /></a>
+            <p>Resumes, cover letters, LinkedIn profiles, and interview preparation written from your experience.</p>
+            <p><a href={'tel:' + PHONE_TEL}>Call or text {PHONE_DISPLAY}</a></p>
+            <p><a href={WA_LINK} target="_blank" rel="noreferrer">WhatsApp {WA_DISPLAY}</a></p>
+          </div>
+          <div>
+            <h3>Our Services</h3>
+            <ul>
+              {services.map(service => (
+                <li key={service.slug}><a href={'#/services/' + service.slug}>{service.title}</a></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3>Resources</h3>
+            <ul>
+              <li><a href="#/samples">Sample Resumes</a></li>
+              <li><a href="#/faq">FAQs</a></li>
+              <li><a href="#/how-it-works">How it Works</a></li>
+              <li><a href="#/pricing">Pricing</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3>Company</h3>
+            <ul>
+              <li><a href="#/about">Our Story</a></li>
+              <li><a href="#/why-us">Why Us</a></li>
+              <li><a href="#/contact">Contact Us</a></li>
+              <li><a href="#/terms">Terms</a></li>
+              <li><a href="#/privacy">Privacy</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="wrap legal">
+          <span>© {new Date().getFullYear()} Ascendant Career Services</span>
+          <nav>
             <a href="#/privacy">Privacy</a>
             <a href="#/terms">Terms</a>
-            <a href="#/refund-policy">Refunds</a>
-                      <a href="#/disclaimer">Disclaimer</a>
-          <a href="#/order-status">Order status</a>
-          <a href="#/client/login">Client access</a>
-          <a href="#/admin">Team access</a>
-          </div>
-          <span className="footer-tagline">CRAFT · CLARITY · CARE</span>
+            <a href="#/disclaimer">Disclaimer</a>
+          </nav>
         </div>
       </footer>
 
-      {formOpen && (
-        <div
-          className="modal-backdrop"
-          role="presentation"
-          onMouseDown={event => {
-            if (event.target === event.currentTarget) setFormOpen(false);
-          }}
-        >
-          <section
-            className="form-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="form-title"
-          >
-            <button
-              className="modal-close"
-              onClick={() => setFormOpen(false)}
-              aria-label="Close form"
-            >
-              <X size={19} />
-            </button>
-            {receipt ? (
-              <div className="receipt-view">
-                <span className="receipt-check">
-                  <Check size={24} />
-                </span>
-                <p className="overline">REQUEST RECORDED</p>
-                <h2 id="form-title">Thank you for starting a conversation.</h2>
-                <p>
-                  Your reference is <strong>{receipt}</strong>. This confirms
-                  that your request was saved; it does not represent a payment
-                  or service acceptance.
-                </p>
-                {formKind === 'order' && (
-                  <p className="payment-state">
-                    Online payment is not enabled until approved prices, terms
-                    and a supported payment provider are configured.
-                  </p>
-                )}
-                <button
-                  className="button button-dark"
-                  onClick={() => setFormOpen(false)}
-                >
-                  Done <ArrowRight size={16} />
-                </button>
-              </div>
-            ) : (
-              <>
-                <p className="overline">
-                  {formKind === 'enquiry'
-                    ? 'A GOOD PLACE TO BEGIN'
-                    : 'SERVICE REQUEST'}
-                </p>
-                <h2 id="form-title">
-                  {formKind === 'enquiry'
-                    ? 'Tell us a little about your goals.'
-                    : 'Let’s scope the right service.'}
-                </h2>
-                <p className="modal-intro">
-                  We’ll use these details to understand your request. Fields
-                  marked * are required.
-                </p>
-                <form onSubmit={handleSubmit} className="enquiry-form">
-                  <div className="field-row">
-                    <label>
-                      Full name *
-                      <input
-                        name="name"
-                        required
-                        autoComplete="name"
-                        maxLength={120}
-                      />
-                    </label>
-                    <label>
-                      Email address *
-                      <input
-                        name="email"
-                        type="email"
-                        required
-                        autoComplete="email"
-                        maxLength={254}
-                      />
-                    </label>
-                  </div>
-                  <div className="field-row">
-                    <label>
-                      Telephone (optional)
-                      <input
-                        name="phone"
-                        type="tel"
-                        autoComplete="tel"
-                        maxLength={40}
-                      />
-                    </label>
-                    <label>
-                      Service *
-                      <select
-                        name="service"
-                        value={selectedService}
-                        onChange={event =>
-                          setSelectedService(event.target.value)
-                        }
-                      >
-                        {services.map(service => (
-                          <option value={service.slug} key={service.slug}>
-                            {service.title}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  {formKind === 'order' && (
-                    <div className="field-row">
-                      <label>
-                        Target role
-                        <input name="targetRole" maxLength={160} />
-                      </label>
-                      <label>
-                        Target market
-                        <input
-                          name="targetMarket"
-                          placeholder="e.g. US, UK, international"
-                          maxLength={120}
-                        />
-                      </label>
-                    </div>
-                  )}
-                  <label>
-                    What would you like help with? *
-                    <textarea
-                      name="message"
-                      required
-                      rows={4}
-                      maxLength={4000}
-                      placeholder="A little context about your goals, experience or target role…"
-                    />
-                  </label>
-                  <label className="check-field">
-                    <input type="checkbox" name="privacy" required /> I
-                    acknowledge the privacy notice and understand that I should
-                    not upload confidential documents through this form. *
-                  </label>
-                  {formKind === 'order' && (
-                    <label className="check-field">
-                      <input type="checkbox" name="terms" required /> I
-                      understand that service scope, price and terms must be
-                      confirmed before any payment. *
-                    </label>
-                  )}
-                  {formError && (
-                    <p className="form-error" role="alert">
-                      {formError}
-                    </p>
-                  )}
-                  <button
-                    className="button button-dark submit-button"
-                    type="submit"
-                    disabled={busy}
-                  >
-                    {busy
-                      ? 'Submitting…'
-                      : formKind === 'enquiry'
-                        ? 'Send enquiry'
-                        : 'Submit service request'}{' '}
-                    <ArrowRight size={16} />
-                  </button>
-                  <p className="form-footnote">
-                    No employment outcome is guaranteed. Please do not include
-                    passwords, government ID numbers or other unrelated
-                    sensitive information.
-                  </p>
-                </form>
-              </>
-            )}
-          </section>
-        </div>
-      )}
-      {toast && (
-        <div className="toast" role="status">
-          {toast}
-          <button
-            onClick={() => setToast('')}
-            aria-label="Dismiss notification"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
+      <a className="wa-float" href={WA_LINK} target="_blank" rel="noreferrer">WhatsApp</a>
     </div>
   );
 }
 
-function ArrowUpRightIcon() {
-  return <ArrowRight size={16} />;
+function PackageGrid() {
+  return (
+    <div className="packages">
+      {packages.map(item => (
+        <article className="package" key={item.slug}>
+          <h2>{item.title}</h2>
+          <p className="who">{item.who}</p>
+          <ul>
+            {item.points.map(point => <li key={point}>{point}</li>)}
+          </ul>
+          <a className="start" href={'#/get-started/' + item.slug}>Get Started »</a>
+        </article>
+      ))}
+    </div>
+  );
 }
 
-function Home({
-  openForm,
-  go,
-  faqOpen,
-  setFaqOpen,
-}: {
-  openForm: (kind: 'enquiry' | 'order', slug?: string) => void;
-  go: (path: string) => void;
-  faqOpen: number | null;
-  setFaqOpen: (value: number | null) => void;
-}) {
+function FaqList({ faqOpen, setFaqOpen }: { faqOpen: number; setFaqOpen: (value: number) => void }) {
+  return (
+    <div>
+      {faqs.map((faq, index) => (
+        <article className="faq-item" key={faq[0]}>
+          <button aria-expanded={faqOpen === index} onClick={() => setFaqOpen(faqOpen === index ? -1 : index)}>
+            <span>{faq[0]}</span>
+            <span>{faqOpen === index ? '−' : '+'}</span>
+          </button>
+          {faqOpen === index && <p>{faq[1]}</p>}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function Inner({ kicker, title, children }: { kicker: string; title: string; children: ReactNode }) {
   return (
     <>
-      <main>
-        <section className="hero page-width">
-          <div className="hero-copy">
-            <p className="overline">
-              <span className="overline-line" /> CAREER DOCUMENTS, CONSIDERED
-            </p>
-            <h1>
-              Your Experience Deserves a <em>Stronger Presentation.</em>
-            </h1>
-            <p className="hero-lead">
-              We help professionals communicate their value through thoughtfully developed résumés, executive career documents and LinkedIn profiles designed to present their experience with clarity and confidence.
-            </p>
-            <div className="hero-actions">
-              <button
-                className="button button-dark"
-                onClick={() => go('services')}
-              >
-                Explore Our Services <ArrowRight size={16} />
-              </button>
-              <button className="text-button" onClick={() => go('portfolio')}>
-                View Our Work <ArrowDownRight size={16} />
-              </button>
-            </div>
-            <div className="hero-note">
-              <span className="note-rule" /> CLEAR SCOPE. HONEST PRESENTATION.
-              NO EMPLOYMENT PROMISES.
-            </div>
-          </div>
-          <div className="hero-art">
-            <div className="art-topline">
-              <span>SELECTED WORK / STUDY 01</span>
-              <span>FIG. A—01</span>
-            </div>
-            <DocumentSpecimen variant="resume" />
-            <div className="art-caption">
-              <span>THE PROFESSIONAL PROFILE</span>
-              <span>FORM FOLLOWS STORY.</span>
-            </div>
-            <div className="gold-stamp">
-              A<br />
-              <small>ASC.</small>
-            </div>
-          </div>
-          <div className="hero-index">
-            <span>01</span>
-            <span>—</span>
-            <span>CRAFTING A CLEARER CAREER STORY</span>
-          </div>
-        </section>
-
-        <section className="intro-band">
-          <div className="page-width intro-inner">
-            <span className="overline">A CAREFUL APPROACH</span>
-            <p>
-              Good career documents do more than list experience. They{' '}
-              <em>make it legible.</em>
-            </p>
-            <span className="intro-aside">
-              Clear structure. Considered language.
-              <br />A professional story that feels like yours.
-            </span>
-          </div>
-        </section>
-
-        <section className="services-section page-width" id="services">
-          <div className="section-heading">
-            <div>
-              <p className="overline">THE SERVICE EDIT</p>
-              <h2>
-                Support for every
-                <br />
-                <em>next step.</em>
-              </h2>
-            </div>
-            <button className="text-button" onClick={() => go('services')}>
-              View all services <ArrowRight size={16} />
-            </button>
-          </div>
-          <div className="service-grid">
-            {services.slice(0, 6).map(service => (
-              <ServiceCard
-                key={service.slug}
-                service={service}
-                onOpen={() => go('services/' + service.slug)}
-                onEnquire={() => openForm('enquiry', service.slug)}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="craft-section">
-          <div className="page-width craft-layout">
-            <div className="craft-copy">
-              <p className="overline">DETAILS, IN THEIR PLACE</p>
-              <h2>
-                Let the work
-                <br />
-                speak <em>clearly.</em>
-              </h2>
-              <p>
-                From a clean information hierarchy to precise, purposeful
-                language, each document is shaped around what matters: your real
-                experience, your direction and the role the document needs to
-                play.
-              </p>
-              <button className="text-button" onClick={() => go('portfolio')}>
-                View illustrative samples <ArrowRight size={16} />
-              </button>
-            </div>
-            <div className="craft-specimens">
-              <DocumentSpecimen variant="letter" />
-              <div className="specimen-overlay">
-                <DocumentSpecimen variant="resume" />
-              </div>
-              <span className="specimen-label">LAYOUT STUDY / 02</span>
-            </div>
-          </div>
-        </section>
-
-        <section className="process-section page-width">
-          <div className="section-heading">
-            <div>
-              <p className="overline">HOW WE WORK</p>
-              <h2>
-                Thoughtful from
-                <br />
-                <em>first brief to final file.</em>
-              </h2>
-            </div>
-            <p className="section-side">
-              Clear expectations help make a good collaboration. We agree on
-              scope before a project begins.
-            </p>
-          </div>
-          <div className="steps-grid">
-            {[
-              ['01', 'Choose your service', 'Start with what you need.'],
-              [
-                '02',
-                'Share your context',
-                'Your experience, target role and goals.',
-              ],
-              ['03', 'Agree the terms', 'Scope, price, timing and revisions.'],
-              ['04', 'Review & receive', 'Refinement and delivery as agreed.'],
-            ].map(step => (
-              <article key={step[0]}>
-                <span>{step[0]}</span>
-                <div className="step-line" />
-                <h3>{step[1]}</h3>
-                <p>{step[2]}</p>
-              </article>
-            ))}
-          </div>
-          <div className="process-link">
-            <button className="text-button" onClick={() => go('how-it-works')}>
-              See the full process <ArrowRight size={16} />
-            </button>
-          </div>
-        </section>
-
-        <section className="editorial-featured">
-          <div className="editorial-featured-inner">
-            <div className="section-heading">
-              <div><p className="overline">SELECTED DOCUMENT STUDIES</p><h2>Different careers.<br/><em>Different structures.</em></h2></div>
-              <button className="text-button" onClick={() => go('portfolio')}>Explore the portfolio <ArrowRight size={16}/></button>
-            </div>
-            <div className="featured-service-note">
-              <p>Every career document starts with your experience, goals and the roles you are pursuing. We discuss your brief before recommending a service.</p>
-              <button className="button button-dark" onClick={() => openForm('enquiry')}>Request a Service Enquiry <ArrowRight size={16}/></button>
-            </div>
-          </div>
-        </section>
-        <section className="recommendations-section">
-          <div className="recommendations-inner">
-            <div className="section-heading">
-              <div>
-                <p className="overline">CLIENT RECOMMENDATIONS</p>
-                <h2>Trusted for the Details<br/><em>That Move Careers Forward.</em></h2>
-              </div>
-              <p className="section-side">Client feedback, shared to reflect the experience of working together.</p>
-            </div>
-            <div className="testimonial-grid">
-              {[
-                {
-                  quote: 'The process helped me look at my experience from a more strategic perspective. Instead of simply listing responsibilities, the résumé presented my leadership experience, business contributions and career progression in a much clearer way. The final document felt appropriate for the level of roles I am pursuing.',
-                  name: 'Michael R. Bennett',
-                  role: 'Senior Operations Executive',
-                  service: 'Executive résumé'
-                },
-                {
-                  quote: 'My LinkedIn profile needed a clearer professional direction. The revised headline, About section and experience descriptions created a more consistent picture of my skills and the work I want to pursue. I now have a much clearer foundation for professional networking.',
-                  name: 'Daniel K. Foster',
-                  role: 'LinkedIn profile client',
-                  service: 'LinkedIn profile optimization'
-                },
-                {
-                  quote: 'I needed help presenting experience from a different industry in a way that made sense for my new career direction. The revised résumé brought forward transferable skills and relevant achievements while making the transition easier to understand.',
-                  name: 'Olivia M. Carter',
-                  role: 'Career transition client',
-                  service: 'Résumé writing'
-                },
-                {
-                  quote: 'The revised CV gave my academic experience a more organized presentation. My education, research activities, teaching experience and professional contributions were easier to navigate, which made the document more suitable for academic and research opportunities.',
-                  name: 'Dr. Samuel T. Williams',
-                  role: 'Academic and research professional',
-                  service: 'Academic CV'
-                },
-                {
-                  quote: 'I appreciated the focus on relevance and clarity. The application documents connected my experience to the type of position I was pursuing without relying on exaggerated language. The result was professional, focused and easier to personalize for individual applications.',
-                  name: 'Natalie J. Brooks',
-                  role: 'Professional résumé client',
-                  service: 'Application documents'
-                }
-              ].map((testimonial, index) => (
-                <article className={'testimonial-card' + (index === 0 ? ' testimonial-featured' : '')} key={testimonial.name}>
-                  <span className="testimonial-index">CLIENT NOTE / 0{index + 1}</span>
-                  <blockquote>“{testimonial.quote}”</blockquote>
-                  <div className="testimonial-byline">
-                    <div className="testimonial-monogram" aria-hidden="true">{testimonial.name.replace('Dr. ', '').split(' ').map(part => part[0]).join('').replace('.', '').slice(0, 2)}</div>
-                    <div><strong>{testimonial.name}</strong><span>{testimonial.role}</span></div>
-                  </div>
-                  <span className="testimonial-service">{testimonial.service}</span>
-                </article>
-              ))}
-            </div>
-            <p className="testimonial-disclaimer">Testimonials are published as supplied by Ascendant Career Services. Individual experiences vary; these comments do not guarantee interviews, job offers, salary increases or any specific employment outcome.</p>
-            <button className="button button-ivory" onClick={() => openForm('enquiry')}>Start Your Project <ArrowRight size={16}/></button>
-          </div>
-        </section>
-        <section className="industries-section">
-          <div className="industries-inner">
-            <div className="section-heading"><div><p className="overline">INDUSTRIES & CAREER DIRECTIONS</p><h2>Career Documents for<br/><em>Ambitious Professionals.</em></h2></div></div>
-            <p className="industry-intro">From technology and cloud computing to healthcare, education, finance and executive leadership, we help professionals present their experience clearly and position their career documents for the roles they are pursuing.</p>
-            <div className="industry-list">
-              {[
-                ['TECHNOLOGY & CLOUD','Technology, software, cloud infrastructure and digital roles.'],
-                ['HEALTHCARE','Healthcare operations, administration and clinical leadership.'],
-                ['HIGHER EDUCATION','Universities, research environments and education roles.'],
-                ['FINANCE & PROFESSIONAL SERVICES','Finance, accounting, consulting and related professions.'],
-                ['BUSINESS OPERATIONS','Operations, project management and organizational leadership.'],
-                ['NON-PROFIT & DEVELOPMENT','Program management and international development contexts.']
-              ].map(item => <article className="industry-item" key={item[0]}><span>INDUSTRY / CAREER DIRECTION</span><h3>{item[0]}</h3><p>{item[1]}</p></article>)}
-            </div>
-
-            <button className="button button-dark" onClick={() => openForm('enquiry')}>Start your project <ArrowRight size={16}/></button>
-          </div>
-        </section>
-        <section className="pricing-band">
-          <div className="page-width pricing-layout">
-            <div>
-              <p className="overline">A CONVERSATION FIRST</p>
-              <h2>Interested in our services?</h2>
-            </div>
-            <div>
-              <p>Tell us about your career goals and the service you need. Our team will review your requirements and respond with suitable options and pricing.</p>
-              <button className="button button-ivory" onClick={() => openForm('enquiry')}>Request a Service Enquiry <ArrowRight size={16}/></button>
-            </div>
-          </div>
-        </section>
-
-        <section className="resources-preview page-width"><ResourcesSection /></section>
-        <section className="trust-section page-width">
-          <div className="trust-icon">
-            <ShieldCheck size={23} />
-          </div>
-          <div>
-            <p className="overline">YOUR STORY IS YOURS</p>
-            <h2>
-              Professional care.
-              <br />
-              <em>Personal information.</em>
-            </h2>
-            <p>
-              Career documents deserve careful handling. We only request
-              information relevant to your selected service, and we will not ask
-              for your social account passwords. Secure document submission will
-              be provided only through an approved workflow.
-            </p>
-            <button className="text-button" onClick={() => go('privacy')}>
-              Read privacy information <ArrowRight size={15} />
-            </button>
-          </div>
-          <div className="trust-list">
-            <span>
-              <Check size={15} /> Accurate, client-provided experience
-            </span>
-            <span>
-              <Check size={15} /> Clear deliverables and terms
-            </span>
-            <span>
-              <Check size={15} /> No guaranteed job outcomes
-            </span>
-            <span>
-              <Check size={15} /> No fabricated credentials or achievements
-            </span>
-          </div>
-        </section>
-
-        <section className="faq-section">
-          <div className="page-width faq-layout">
-            <div>
-              <p className="overline">GOOD QUESTIONS, CLEAR ANSWERS</p>
-              <h2>
-                Before we
-                <br />
-                <em>get started.</em>
-              </h2>
-              <p>
-                Anything else on your mind? Send an enquiry and tell us what you
-                need.
-              </p>
-              <button
-                className="text-button"
-                onClick={() => openForm('enquiry')}
-              >
-                Ask a question <ArrowRight size={15} />
-              </button>
-            </div>
-            <div className="faq-list">
-              {faqs.map((faq, index) => (
-                <article
-                  className={
-                    faqOpen === index ? 'faq-item expanded' : 'faq-item'
-                  }
-                  key={faq[0]}
-                >
-                  <button
-                    onClick={() => setFaqOpen(faqOpen === index ? null : index)}
-                    aria-expanded={faqOpen === index}
-                  >
-                    <span>{faq[0]}</span>
-                    <span className="faq-toggle">
-                      {faqOpen === index ? '−' : '+'}
-                    </span>
-                  </button>
-                  {faqOpen === index && <p>{faq[1]}</p>}
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="final-cta page-width">
-          <span className="overline">
-            YOUR NEXT CHAPTER STARTS WITH A CONVERSATION
-          </span>
-          <h2>
-            Let’s make your story
-            <br />
-            <em>easier to see.</em>
-          </h2>
-          <button
-            className="button button-dark"
-            onClick={() => openForm('enquiry')}
-          >
-            Start an enquiry <ArrowRight size={16} />
-          </button>
-          <div className="cta-mark">A</div>
-        </section>
-      </main>
+      <div className="page-hero">
+        <div className="wrap">
+          <p>{kicker}</p>
+          <h1>{title}</h1>
+        </div>
+      </div>
+      <section className="section">
+        <div className="wrap">{children}</div>
+      </section>
     </>
   );
 }
 
-function ServiceCard({
-  service,
-  onOpen,
-  onEnquire,
-}: {
-  service: Service;
-  onOpen: () => void;
-  onEnquire: () => void;
-}) {
+function DocumentPreview({ kind }: { kind: 'resume' | 'letter' }) {
+  if (kind === 'letter') {
+    return (
+      <div className="doc-sheet" aria-label="Illustrative cover letter layout">
+        <div className="doc-name">YOUR NAME</div>
+        <div className="doc-meta">City · email@example.com · Phone</div>
+        <p>[Date]</p>
+        <p>Dear [Hiring Manager],</p>
+        <p>I am writing about the [Target Role]. In my current work I [one true example]. Before that I [a second true example].</p>
+        <p>I would like to talk about how that experience fits the role.</p>
+        <p>Sincerely,<br /><strong>[Your Name]</strong></p>
+      </div>
+    );
+  }
   return (
-    <article className="service-card">
-      <div className="service-card-top">
-        <span>{service.eyebrow}</span>
-        <FileText size={18} />
-      </div>
-      <h3>{service.title}</h3>
-      <p>{service.description}</p>
-      <div className="service-card-actions">
-        <button className="card-link" onClick={onOpen}>
-          Explore <ArrowRight size={14} />
-        </button>
-        <button
-          className="card-enquire"
-          onClick={onEnquire}
-          aria-label={'Enquire about ' + service.title}
-        >
-          Enquire <ArrowRight size={14} />
-        </button>
-      </div>
-    </article>
-  );
-}
-
-function DocumentSpecimen({ variant }: { variant: 'resume' | 'letter' }) {
-  return (
-    <div
-      className={
-        'document-specimen ' + (variant === 'letter' ? 'letter-specimen' : '')
-      }
-      aria-label={
-        variant === 'resume'
-          ? 'Career résumé document layout'
-          : 'Professional cover letter document layout'
-      }
-    >
-      <div className="doc-head">
-        <span className="doc-monogram">A</span>
-        <div>
-          <strong>CAREER DOCUMENT</strong>
-          <small>{variant === 'resume' ? 'PROFESSIONAL PROFILE' : 'PROFESSIONAL CORRESPONDENCE'}</small>
-        </div>
-        <span className="doc-number">ASC</span>
-      </div>
-      {variant === 'resume' ? (
-        <>
-          <div className="doc-section">
-            <span>PROFILE</span>
-            <div className="doc-lines">
-              <i className="long" />
-              <i />
-              <i className="medium" />
-            </div>
-          </div>
-          <div className="doc-section">
-            <span>EXPERIENCE</span>
-            <div className="doc-entry">
-              <b>Senior Operations Lead</b>
-              <small>Northline Studio · 2021—2025</small>
-              <div className="doc-lines">
-                <i />
-                <i className="medium" />
-              </div>
-            </div>
-            <div className="doc-entry">
-              <b>Project Manager</b>
-              <small>Fieldwork & Co. · 2018—2021</small>
-              <div className="doc-lines">
-                <i />
-                <i className="short" />
-              </div>
-            </div>
-          </div>
-          <div className="doc-section two-col">
-            <div>
-              <span>CORE STRENGTHS</span>
-              <div className="doc-lines">
-                <i />
-                <i />
-                <i className="medium" />
-              </div>
-            </div>
-            <div>
-              <span>EDUCATION</span>
-              <div className="doc-lines">
-                <i />
-                <i className="short" />
-              </div>
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="letter-meta">
-            <span>14 OCTOBER 2026</span>
-            <span>APPLICATION / ROLE</span>
-          </div>
-          <div className="doc-letter-copy">
-            <i className="medium" />
-            <i />
-            <i />
-            <i className="long" />
-            <i className="short" />
-            <br />
-            <i />
-            <i className="long" />
-            <i />
-            <i className="medium" />
-            <br />
-            <i />
-            <i className="long" />
-            <i className="short" />
-          </div>
-          <div className="doc-sign">
-            <i className="medium" />
-            <b>Jordan Reed</b>
-          </div>
-        </>
-      )}
-      <div className="doc-footer">
-        <span>CAREER DOCUMENT DESIGN</span>
-        <span>ASCENDANT CAREER SERVICES</span>
-      </div>
+    <div className="doc-sheet" aria-label="Illustrative resume layout">
+      <div className="doc-name">YOUR NAME</div>
+      <div className="doc-meta">City · email@example.com · LinkedIn URL</div>
+      <h3>SUMMARY</h3>
+      <div className="rule" /><div className="rule mid" /><div className="rule short" />
+      <h3>EXPERIENCE</h3>
+      <p><strong>Role title</strong> · Dates<br />Organization · Location</p>
+      <div className="rule" /><div className="rule mid" />
+      <h3>EDUCATION</h3>
+      <div className="rule short" />
     </div>
   );
 }
 
-function ClientPortal({ route, go }: { route: string; go: (path: string) => void }) {
-  const [user, setUser] = useState<{ userId: string; email?: string; name?: string; scope: string } | null>(null);
-  const [orders, setOrders] = useState<ClientOrder[]>([]);
-  const [order, setOrder] = useState<ClientOrder | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const isDocumentRoute = route.endsWith('/documents') || route.endsWith('/revisions');
-  const isDetailRoute = route.startsWith('client/orders/') && !isDocumentRoute;
+function EnquiryForm({ preset }: { preset: string }) {
+  const options = [
+    ...packages.map(item => ({ value: item.slug, label: item.title })),
+    ...services.filter(item => item.slug !== 'resume-writing').map(item => ({ value: item.slug, label: item.title })),
+  ];
+  const initial = options.some(item => item.value === preset) ? preset : 'professional-resume';
+  const [sentLink, setSentLink] = useState('');
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      setLoading(true);
-      setErrorMessage('');
-      try {
-        const current = await auth.getUser();
-        if (!active) return;
-        setUser(current);
-        if (!current) {
-          setOrders([]);
-          setOrder(null);
-          return;
-        }
-        if (route === 'client/orders' || route === 'order-status') {
-          const response = await api.get('/api/client/orders');
-          if (!active) return;
-          setOrders(response.data.items ?? []);
-          setOrder(null);
-        } else if (isDetailRoute) {
-          const reference = decodeURIComponent(route.slice('client/orders/'.length));
-          const response = await api.get('/api/client/orders/' + encodeURIComponent(reference));
-          if (!active) return;
-          setOrder(response.data.order ?? null);
-          setOrders([]);
-        } else {
-          setOrders([]);
-          setOrder(null);
-        }
-      } catch (err) {
-        if (active) {
-          setErrorMessage('We could not load order information. Sign in with the email address used for the request, then try again.');
-          setOrders([]);
-          setOrder(null);
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    const data = new FormData(event.currentTarget);
+    if (data.get('privacy') !== 'on') {
+      setError('Please confirm the privacy note before sending.');
+      return;
     }
-    void load();
-    return () => { active = false; };
-  }, [route]);
-
-  async function signIn() {
-    setBusy(true);
-    setErrorMessage('');
-    try {
-      await auth.signIn();
-      const current = await auth.getUser();
-      if (!current) throw new Error('Sign-in was not completed.');
-      setUser(current);
-      go('client/orders');
-    } catch (err) {
-      setErrorMessage('Sign-in was not completed. Allow the sign-in window and use an account with access to your order email.');
-    } finally {
-      setBusy(false);
-    }
+    const service = options.find(item => item.value === String(data.get('service')))?.label ?? 'Service enquiry';
+    const text = [
+      'Hello Ascendant Career Services, I would like to enquire about a service.',
+      'Name: ' + String(data.get('name') ?? '').trim(),
+      'Email: ' + String(data.get('email') ?? '').trim(),
+      'Phone: ' + String(data.get('phone') ?? '').trim(),
+      'Service: ' + service,
+      'Message: ' + String(data.get('message') ?? '').trim(),
+    ].join('\n');
+    const url = WA_LINK + '?text=' + encodeURIComponent(text);
+    setSentLink(url);
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
-  async function signOut() {
-    setBusy(true);
-    try {
-      await auth.signOut();
-      setUser(null);
-      setOrders([]);
-      setOrder(null);
-      go('client/login');
-    } catch (err) {
-      setErrorMessage('We could not sign you out. Please try again.');
-    } finally {
-      setBusy(false);
-    }
+  if (sentLink) {
+    return (
+      <div className="form-card success">
+        <h2>Your message is ready in WhatsApp.</h2>
+        <p>Press send in WhatsApp to deliver it to {WA_DISPLAY}. If the window did not open, use the link below.</p>
+        <p><a href={sentLink} target="_blank" rel="noreferrer">Open WhatsApp</a></p>
+        <p>You can also call or text <a href={'tel:' + PHONE_TEL}>{PHONE_DISPLAY}</a>.</p>
+      </div>
+    );
   }
 
   return (
-    <section className="page-width inner-page client-portal">
-      <p className="overline">PRIVATE CLIENT AREA</p>
-      <h1>
-        {route === 'order-status' ? <>Your order, <em>clearly tracked.</em></> : <>Your work, <em>in one place.</em></>}
-      </h1>
-      <p className="page-intro">
-        Sign in with the same email address used for your service request. Only
-        orders associated with your authenticated email are returned here.
-      </p>
-      {!user ? (
-        <div className="pricing-pending portal-panel">
-          <ShieldCheck size={24} />
-          <h2>Sign in to view your orders.</h2>
-          <p>
-            Order information is not available through a public reference-only
-            page. Authentication is required before any order details are shown.
-          </p>
-          {errorMessage && <p className="form-error" role="alert">{errorMessage}</p>}
-          <button className="button button-dark" onClick={() => void signIn()} disabled={busy}>
-            {busy ? 'Opening sign-in…' : 'Sign in securely'} <ArrowRight size={16} />
-          </button>
-        </div>
-      ) : loading ? (
-        <p className="muted">Loading your order information…</p>
-      ) : isDocumentRoute ? (
-        <div className="pricing-pending portal-panel">
-          <ShieldCheck size={24} />
-          <h2>{route.endsWith('/documents') ? 'Secure document access is not enabled yet.' : 'Revision requests are not enabled yet.'}</h2>
-          <p>
-            Private file storage and delivery controls must be configured and
-            tested before confidential career documents can be uploaded or
-            downloaded. Please do not email passwords or unrelated sensitive
-            information.
-          </p>
-          <button className="button button-dark" onClick={() => go('client/orders')}>
-            Return to your orders <ArrowRight size={16} />
-          </button>
-        </div>
-      ) : errorMessage ? (
-        <div className="error-panel" role="alert">{errorMessage}</div>
-      ) : isDetailRoute && order ? (
-        <div className="client-order-detail">
-          <button className="text-button" onClick={() => go('client/orders')}>← All orders</button>
-          <div className="order-detail-heading">
-            <div>
-              <span className="overline">ORDER REFERENCE</span>
-              <h2>{order.reference}</h2>
-              <p className="muted">{order.service} · {new Date(order.createdAt).toLocaleDateString()}</p>
-            </div>
-            <span className="status-pill">{order.status.replace(/_/g, ' ')}</span>
-          </div>
-          <div className="client-order-facts">
-            <div><span>Target role</span><strong>{order.targetRole || 'Not provided'}</strong></div>
-            <div><span>Target market</span><strong>{order.targetMarket || 'Not provided'}</strong></div>
-            <div><span>Payment status</span><strong>{order.paymentStatus.replace(/_/g, ' ')}</strong></div>
-            <div><span>Service status</span><strong>{order.status.replace(/_/g, ' ')}</strong></div>
-          </div>
-          <h3>Your request</h3>
-          <p className="order-message">{order.message || 'No additional request details.'}</p>
-          {order.statusHistory?.length ? (
-            <div className="order-history">
-              <h3>Order activity</h3>
-              <ol>
-                {order.statusHistory.map((event, index) => (
-                  <li key={event.at + '-' + index}>
-                    <span>{event.status.replace(/_/g, ' ')}</span>
-                    <small>{new Date(event.at).toLocaleString()}</small>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          ) : null}
-          <div className="policy-warning">The current site records service requests but does not yet accept payment or private document uploads.</div>
-          <button className="button button-dark" onClick={() => go('client/orders')}>Back to order list <ArrowRight size={16} /></button>
-        </div>
-      ) : (
-        <div>
-          <div className="portal-toolbar">
-            <p className="muted">Signed in as {user.email || user.name || 'authenticated client'}</p>
-            <button className="text-button" onClick={() => void signOut()} disabled={busy}>Sign out</button>
-          </div>
-          {orders.length ? (
-            <div className="client-order-list">
-              {orders.map(item => (
-                <button className="client-order-card" key={item.id} onClick={() => go('client/orders/' + encodeURIComponent(item.reference))}>
-                  <span className="client-order-card-main">
-                    <span className="overline">{item.reference}</span>
-                    <strong>{item.service}</strong>
-                    <small>Requested {new Date(item.createdAt).toLocaleDateString()}</small>
-                  </span>
-                  <span className="client-order-card-status">{item.status.replace(/_/g, ' ')} <ArrowRight size={15} /></span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="pricing-pending portal-panel">
-              <h2>No orders are linked to this account.</h2>
-              <p>Use the email address submitted with your order, or start a new service request.</p>
-              <button className="button button-dark" onClick={() => go('request-service')}>Start a service request <ArrowRight size={16} /></button>
-            </div>
-          )}
-        </div>
-      )}
-      <div className="portal-bottom-links">
-        <button className="text-button" onClick={() => go('services')}>Explore services <ArrowRight size={15} /></button>
-        <button className="text-button" onClick={() => go('contact')}>Contact the team <ArrowRight size={15} /></button>
+    <form className="form-card enquiry-form" onSubmit={onSubmit}>
+      <h2 style={{ color: '#222', marginBottom: 0 }}>Request a service enquiry</h2>
+      <div className="field-row">
+        <label>Full name *
+          <input name="name" required autoComplete="name" maxLength={120} />
+        </label>
+        <label>Email *
+          <input name="email" type="email" required autoComplete="email" maxLength={254} />
+        </label>
       </div>
-    </section>
+      <div className="field-row">
+        <label>Phone
+          <input name="phone" type="tel" autoComplete="tel" maxLength={40} />
+        </label>
+        <label>Service *
+          <select name="service" defaultValue={initial}>
+            {options.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <label>What should we know? *
+        <textarea name="message" required rows={5} maxLength={2000} placeholder="Your target role, years of experience, and what you want written." />
+      </label>
+      <label className="check">
+        <input type="checkbox" name="privacy" required />
+        <span>I understand this form opens WhatsApp so I can send my own message, and I will not include passwords or government ID numbers.</span>
+      </label>
+      {error && <p className="form-error" role="alert">{error}</p>}
+      <button className="btn" type="submit">Get Started</button>
+    </form>
+  );
+}
+
+function Policy({ route }: { route: string }) {
+  if (route === 'privacy') {
+    return (
+      <Inner title="Privacy notice" kicker="Company">
+        <div className="prose">
+          <p>The enquiry form on this website does not save your details on our server. When you submit it, your browser opens WhatsApp with the name, email, phone, service, and message you typed, so you can send that message to {WA_DISPLAY}.</p>
+          <p>If you call or text {PHONE_DISPLAY}, your phone provider handles that communication the way it handles any other call or text.</p>
+          <p>Please do not send passwords, government identification numbers, or other information we do not need in order to write a career document.</p>
+        </div>
+      </Inner>
+    );
+  }
+  if (route === 'terms') {
+    return (
+      <Inner title="Terms of service" kicker="Company">
+        <div className="prose">
+          <p>Work begins only after we confirm the service, the price, the turnaround, and the revision terms with you. Submitting the form or sending a WhatsApp message is an enquiry, not a paid order.</p>
+          <p>You agree that the experience, dates, titles, and results you give us are accurate. We will not add credentials or achievements you did not provide.</p>
+          <p>There is no online checkout on this site. Any payment is arranged separately after the scope is confirmed.</p>
+        </div>
+      </Inner>
+    );
+  }
+  return (
+    <Inner title="Service disclaimer" kicker="Company">
+      <div className="prose">
+        <h2>No employment guarantee</h2>
+        <p>Buying a resume, letter, profile, bio, or coaching session does not guarantee interviews, job offers, recruiter replies, or any salary. Employers make those decisions.</p>
+        <h2>What we are</h2>
+        <p>Ascendant Career Services is a writing and preparation service. It is not a recruitment agency and it does not place candidates into jobs.</p>
+      </div>
+    </Inner>
   );
 }
 
