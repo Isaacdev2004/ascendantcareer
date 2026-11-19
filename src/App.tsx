@@ -7,6 +7,41 @@ const PHONE_TEL = '+16183281534';
 const TEXT_LINK = 'sms:+16183281534';
 const WA_DISPLAY = '+1 (618) 440-6067';
 const WA_LINK = 'https://wa.me/16184406067';
+const EMAIL = 'contact@ascendantcareer.com';
+const MAILTO = 'mailto:contact@ascendantcareer.com';
+
+const team = [
+  {
+    name: 'Victor I.',
+    initials: 'VI',
+    role: 'Ascendant Career Writer',
+    bio: 'Victor works with senior professionals who need a resume that shows leadership scope, business contribution, and career progression instead of a long list of duties. Since joining Ascendant, he has helped managers and executives prepare for a new opportunity, a wider role, or a move that has to be explained clearly. He starts from what the client actually did, then shapes that record into a document a hiring manager can read quickly. Victor’s priority is personal service: each resume is built around that person, not a template.',
+  },
+  {
+    name: 'Esther O.',
+    initials: 'EO',
+    role: 'Ascendant Career Writer',
+    bio: 'Esther focuses on people who are changing direction. She looks for skills that carry from one field to another and puts those forward so the new path is easy to understand. Since joining Ascendant, she has worked with professionals preparing for a career change, people returning to work, and clients moving from hands-on roles into leadership. She writes in plain language and does not stretch a story past what the client can discuss in an interview. Esther’s aim is a document the client can stand behind.',
+  },
+  {
+    name: 'Azeez K.',
+    initials: 'AK',
+    role: 'Ascendant Career Writer',
+    bio: 'Azeez writes for technical and professional roles, where the details matter and the page still has to be readable. He helps clients show projects, tools, and results in language that fits the jobs they are targeting. Since joining Ascendant, he has worked with people in technology, operations, and professional services, including clients updating a resume after years in the same field. He will not add a skill or a result the client did not provide, and he revises until the draft matches the agreed brief.',
+  },
+  {
+    name: 'Joseph P.',
+    initials: 'JP',
+    role: 'Ascendant Career Writer',
+    bio: 'Joseph works with students, recent graduates, and people early in their careers. A first resume cannot lean on a long work history, so he draws out education, projects, part-time work, and strengths that are real. Since joining Ascendant, he has helped entry-level candidates prepare a resume and a short cover letter for a first professional role. He keeps the process straightforward and explains each choice, so the client understands the document and can update it later.',
+  },
+  {
+    name: 'Margaret A.',
+    initials: 'MA',
+    role: 'Ascendant Career Writer',
+    bio: 'Margaret writes the pieces that sit beside the resume: LinkedIn profiles, cover letters, professional bios, and thank-you notes. She looks for one consistent story, so the headline, the About section, and the letter all describe the same person. Since joining Ascendant, she has helped clients who needed a clearer public profile or a letter aimed at one specific role. She takes time with the details the client confirms, then uses those details to make the background distinct without overstating it.',
+  },
+];
 
 type Service = {
   slug: string;
@@ -189,7 +224,7 @@ const faqs = [
   ],
   [
     'How do I reach you?',
-    `Call or text ${PHONE_DISPLAY}. For WhatsApp, message ${WA_DISPLAY}. The form on this site opens a WhatsApp message so you can send your request directly.`,
+    `Call or text ${PHONE_DISPLAY}. Email ${EMAIL}. For WhatsApp, message ${WA_DISPLAY}. The form on this site opens a WhatsApp message so you can send your request directly.`,
   ],
   [
     'Can I request changes after delivery?',
@@ -255,6 +290,7 @@ function App() {
     if (route === 'samples') return 'samples';
     if (route === 'faq') return 'faq';
     if (route === 'about') return 'about';
+    if (route === 'team') return 'team';
     if (route === 'contact') return 'contact';
     if (route === 'get-started' || route.startsWith('get-started/')) return 'start';
     if (route === 'privacy' || route === 'terms' || route === 'disclaimer') return 'policy';
@@ -313,7 +349,15 @@ function App() {
                 <a href="#/faq">FAQs</a>
               </div>
             </div>
-            <a href="#/about">About Us</a>
+            <div className={openMenu === 'about' ? 'menu open' : 'menu'}>
+              <button className="trigger" onClick={() => setOpenMenu(openMenu === 'about' ? '' : 'about')}>
+                About Us <ChevronDown size={14} />
+              </button>
+              <div className="menu-panel">
+                <a href="#/about">Our Story</a>
+                <a href="#/team">Meet the Team</a>
+              </div>
+            </div>
             <a className="btn header-cta" href="#/get-started">Get Started</a>
             <form className="search" onSubmit={onSearch} role="search">
               <input name="q" aria-label="Search services" placeholder="Search…" />
@@ -323,9 +367,10 @@ function App() {
         </div>
       </header>
 
-      <div className="callbar">
-        <a href={'tel:' + PHONE_TEL}>Tap here to call or text us now! {PHONE_DISPLAY}</a>
-        <span className="split" aria-hidden="true">|</span>
+      <a className="callbar" href={'tel:' + PHONE_TEL}>Tap here to call us now!</a>
+      <div className="reach">
+        <a href={TEXT_LINK}>Text {PHONE_DISPLAY}</a>
+        <a href={MAILTO}>{EMAIL}</a>
         <a href={WA_LINK} target="_blank" rel="noreferrer">WhatsApp {WA_DISPLAY}</a>
       </div>
 
@@ -511,7 +556,7 @@ function App() {
             </article>
             <article className="info-card">
               <h3>A person answers</h3>
-              <p>Call or text {PHONE_DISPLAY}. WhatsApp {WA_DISPLAY}. Use the same number you want us to reply to.</p>
+              <p>Call or text {PHONE_DISPLAY}. Email {EMAIL}. WhatsApp {WA_DISPLAY}.</p>
             </article>
             <article className="info-card">
               <h3>No job promise</h3>
@@ -570,23 +615,47 @@ function App() {
               We are not a recruitment agency. We do not submit applications for you, and we do not promise that an employer will call.
             </p>
             <p>
-              The fastest way to reach us is a call or text at {PHONE_DISPLAY}, or WhatsApp at {WA_DISPLAY}.
+              The fastest way to reach us is a call or text at {PHONE_DISPLAY}, an email to {EMAIL}, or WhatsApp at {WA_DISPLAY}.
             </p>
+            <p><a className="btn" href="#/team">Meet the team</a></p>
             <a className="btn" href="#/contact">Contact Us</a>
           </div>
         </Inner>
       )}
 
+      {page === 'team' && (
+        <Inner title="The people who write with Ascendant." kicker="Meet the Team">
+          <p className="lead">
+            Each writer takes a different kind of brief. Every document is still built only from the experience the client provides.
+          </p>
+          <div className="team-grid">
+            {team.map(person => (
+              <article className="team-card" key={person.name}>
+                <span className="mono" aria-hidden="true">{person.initials}</span>
+                <h2>{person.name}</h2>
+                <p className="role">{person.role}</p>
+                <p className="bio">{person.bio}</p>
+              </article>
+            ))}
+          </div>
+          <p className="disclaimer">
+            Questions for the team can go to <a href={MAILTO}>{EMAIL}</a>, a call or text at {PHONE_DISPLAY}, or WhatsApp at {WA_DISPLAY}.
+          </p>
+        </Inner>
+      )}
+
       {page === 'contact' && (
-        <Inner title="Call, text, or send a note." kicker="Contact Us">
+        <Inner title="Call, text, email, or send a note." kicker="Contact Us">
           <div className="contact-layout">
             <div className="contact-card">
               <h3>Call or text</h3>
               <a className="big" href={'tel:' + PHONE_TEL}>{PHONE_DISPLAY}</a>
               <a href={TEXT_LINK}>Send a text message</a>
+              <h3 style={{ marginTop: 22 }}>Email</h3>
+              <a className="big" href={MAILTO}>{EMAIL}</a>
               <h3 style={{ marginTop: 22 }}>WhatsApp</h3>
               <a className="big" href={WA_LINK} target="_blank" rel="noreferrer">{WA_DISPLAY}</a>
-              <p>Use the form if you would rather start with a few details. It opens WhatsApp with your message ready to send.</p>
+              <p>Use the form if you would rather start with a few details. It opens WhatsApp with your message ready to send. You can also email {EMAIL} directly.</p>
             </div>
             <EnquiryForm preset="" />
           </div>
@@ -600,6 +669,8 @@ function App() {
               <h3>Prefer to talk now?</h3>
               <a className="big" href={'tel:' + PHONE_TEL}>{PHONE_DISPLAY}</a>
               <p>That number is for calls and texts.</p>
+              <h3>Email</h3>
+              <a className="big" href={MAILTO}>{EMAIL}</a>
               <h3>WhatsApp</h3>
               <a className="big" href={WA_LINK} target="_blank" rel="noreferrer">{WA_DISPLAY}</a>
               <p>After you submit the form, WhatsApp opens so you can send the enquiry yourself. This page does not store the form on a server.</p>
@@ -623,6 +694,7 @@ function App() {
             <a className="foot-brand" href="#/"><img src="/logo.png" alt="Ascendant" /></a>
             <p>Resumes, cover letters, LinkedIn profiles, and interview preparation written from your experience.</p>
             <p><a href={'tel:' + PHONE_TEL}>Call or text {PHONE_DISPLAY}</a></p>
+            <p><a href={MAILTO}>{EMAIL}</a></p>
             <p><a href={WA_LINK} target="_blank" rel="noreferrer">WhatsApp {WA_DISPLAY}</a></p>
           </div>
           <div>
@@ -646,6 +718,7 @@ function App() {
             <h3>Company</h3>
             <ul>
               <li><a href="#/about">Our Story</a></li>
+              <li><a href="#/team">Meet the Team</a></li>
               <li><a href="#/why-us">Why Us</a></li>
               <li><a href="#/contact">Contact Us</a></li>
               <li><a href="#/terms">Terms</a></li>
@@ -783,7 +856,7 @@ function EnquiryForm({ preset }: { preset: string }) {
         <h2>Your message is ready in WhatsApp.</h2>
         <p>Press send in WhatsApp to deliver it to {WA_DISPLAY}. If the window did not open, use the link below.</p>
         <p><a href={sentLink} target="_blank" rel="noreferrer">Open WhatsApp</a></p>
-        <p>You can also call or text <a href={'tel:' + PHONE_TEL}>{PHONE_DISPLAY}</a>.</p>
+        <p>You can also email <a href={MAILTO}>{EMAIL}</a>, or call or text <a href={'tel:' + PHONE_TEL}>{PHONE_DISPLAY}</a>.</p>
       </div>
     );
   }
@@ -830,7 +903,7 @@ function Policy({ route }: { route: string }) {
       <Inner title="Privacy notice" kicker="Company">
         <div className="prose">
           <p>The enquiry form on this website does not save your details on our server. When you submit it, your browser opens WhatsApp with the name, email, phone, service, and message you typed, so you can send that message to {WA_DISPLAY}.</p>
-          <p>If you call or text {PHONE_DISPLAY}, your phone provider handles that communication the way it handles any other call or text.</p>
+          <p>If you call or text {PHONE_DISPLAY}, your phone provider handles that communication the way it handles any other call or text. Email sent to {EMAIL} is read by the Ascendant team.</p>
           <p>Please do not send passwords, government identification numbers, or other information we do not need in order to write a career document.</p>
         </div>
       </Inner>
